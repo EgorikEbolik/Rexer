@@ -2,6 +2,8 @@ import watchdog.events
 import watchdog.observers
 import time
 from loguru import logger
+from fileProcessor import rename_file
+from windowHandler import get_active_window
 from settings import settings
 
 from utils import create_folder
@@ -19,7 +21,16 @@ class Monitor(watchdog.events.PatternMatchingEventHandler):
                           ignore_directories=True, case_sensitive=False)
 
     def on_created(self, event):
+      try:
+        window = get_active_window()
         logger.info(f"Появился новый файл {event.src_path}")
+        rename_file(event.src_path, window)
+        
+      except Exception as e:
+        logger.error(f"Ошибка при обработке файла {event.src_path}: {e}")
+
+        
+
 
 def start_monitor():
   folder_to_watch = settings.data["watch_folder"]
@@ -33,5 +44,7 @@ def start_monitor():
     while True:
       time.sleep(1)
   except KeyboardInterrupt:
-      observer.stop()
+    observer.stop()
+  finally:
+    logger.info("Работа монитора завершена")
   observer.join()

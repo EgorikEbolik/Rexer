@@ -14,4 +14,11 @@ def get_logs_folder() -> Path:
   logs_folder_path: Path = Path.joinpath(root_path, "logs")
   return logs_folder_path
 
-print(get_logs_folder())
+def get_resources_folder() -> Path:
+  root_path: Path = get_app_dir()
+  resources_folder_path: Path = Path.joinpath(root_path.parent, "resources")
+  return resources_folder_path
+
+
+
+print(get_resources_folder())

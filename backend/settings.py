@@ -1,4 +1,5 @@
-from paths import get_config_path
+from paths import get_config_path, get_resources_folder
+from loguru import logger
 
 import json
 from pathlib import Path
@@ -9,7 +10,14 @@ class Settings:
         "watch_folder": f"{Path.home() / "Videos/Recordings"}",
         "dest_folder": f"{Path.home() / "Videos/Clips"}",
         "sort_by_game": False,
+        "sound_file": str(get_resources_folder() / "done.wav"),
         "sound_enabled": True,
+        "sound_volume": 0.5,
+        "filename_template": "{window} {day}-{month}-{year} {hour}-{min}-{sec}",
+        "sort_date_format": "{year}-{month}",  
+        "sort_mode": "date",  # "game", "date", "none"
+        "autostart": False
+
     }
 
   def __init__(self) -> None:
@@ -17,10 +25,16 @@ class Settings:
     self.load()
 
   def save(self):
-    config_path = get_config_path()
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(config_path, 'w') as file:
+    try:
+      config_path = get_config_path()
+      config_path.parent.mkdir(parents=True, exist_ok=True)
+      with open(config_path, 'w') as file:
         json.dump(self.data, file, indent=2)
+    except (PermissionError, IOError) as e:
+      logger.error(f"Нет доступа к файлу настроек {config_path}: {e}")
+    except Exception as e:
+      logger.error(f"Неизвестная ошибка при сохранении настроек: {e}")
+
 
 
   def load(self):

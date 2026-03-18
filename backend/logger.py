@@ -16,5 +16,6 @@ def setup_logger():
     format="{time:DD.MM.YYYY HH:mm:ss} | {level} | {message}",
     level="INFO",
     rotation="00:00",
-    retention="7 days"
+    retention="7 days",
+    
   )
