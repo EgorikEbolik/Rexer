@@ -13,4 +13,5 @@ dependencies = [
     "soundfile>=0.13.1",
     "uvicorn>=0.42.0",
     "watchdog>=6.0.0",
+    "websockets>=16.0",
 ]

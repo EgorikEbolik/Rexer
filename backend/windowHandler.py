@@ -49,11 +49,11 @@ def get_active_window():
 
 
 
-if __name__ == "__main__":
-    import time
-    try:
-      while True:
-        get_active_window()
-        time.sleep(2)
-    except KeyboardInterrupt as keyboard:
-      logger.debug("Пользователь остановил определение окна")
+# if __name__ == "__main__":
+#     import time
+#     try:
+#       while True:
+#         get_active_window()
+#         time.sleep(2)
+#     except KeyboardInterrupt as keyboard:
+#       logger.debug("Пользователь остановил определение окна")

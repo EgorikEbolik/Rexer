@@ -4,56 +4,88 @@ import sys
 import sounddevice as sd
 import soundfile as sf
 from loguru import logger
+import os
+from typing import Optional
 
 from settings import settings
 
 APP_NAME = "Rexer"
 
-def create_folder(folder_path:Path | str):
-  path = Path(folder_path)
-  try:
-    if path.exists():
-          return False
-    
-    path.mkdir(parents=True)
-    logger.info(f"Создана папка {folder_path} ")
-    return True
-  except Exception:
-    logger.error(f"Ошибка при создании папки {folder_path}")
-    return False
-  
-
-def play_sound(sound_file, volume: float = None):
-  if volume is None:
-     volume =  settings.data["sound_volume"] 
-  data, samplerate = sf.read(sound_file)
-  sd.play(data * volume, samplerate)
-
-def set_autostart(enabled: bool):
-  key = winreg.OpenKey(
-      winreg.HKEY_CURRENT_USER,
-      r"Software\Microsoft\Windows\CurrentVersion\Run",
-      0, winreg.KEY_SET_VALUE
-  )
-  if enabled:
-    exe = sys.executable
-    winreg.SetValueEx(key, APP_NAME, 0, winreg.REG_SZ, exe)
-    logger.info("Автозапуск включен")
-  else:
+def create_folder(folder_path: Path | str) -> bool:
+    """Создаёт папку, если её нет. Возвращает True при успехе или если папка уже существует."""
     try:
-      winreg.DeleteValue(key, APP_NAME)      
+        path = Path(folder_path)
+        if path.exists():
+            return path.is_dir()
+        path.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Создана папка: {folder_path}")
+        return True
     except Exception as e:
-      logger.error("Не удалось удалить программу из автозапуска")  
+        logger.exception(f"Ошибка при создании папки {folder_path}: {e}")
+        return False
+
+def play_sound(sound_file: str | Path, volume: Optional[float] = None) -> bool:
+    """Воспроизводит звуковой файл с заданной громкостью. Возвращает True при успехе."""
+    try:
+        sound_path = Path(sound_file)
+        if not sound_path.exists():
+            logger.error(f"Звуковой файл не найден: {sound_file}")
+            return False
+        if volume is None:
+            volume = settings.data.get("sound_volume", 0.5)
+        volume = max(0.0, min(1.0, volume))
+        data, samplerate = sf.read(str(sound_path))
+        sd.play(data * volume, samplerate)
+        logger.debug(f"Воспроизведён звук: {sound_file}, громкость: {volume:.0%}")
+        return True
+    except Exception as e:
+        logger.exception(f"Ошибка воспроизведения звука {sound_file}: {e}")
+        return False
+
+def set_autostart(enabled: bool) -> bool:
+    """Включает/отключает автозапуск в реестре Windows. Возвращает True при успехе."""
+    try:
+        key = winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\CurrentVersion\Run",
+            0, winreg.KEY_SET_VALUE
+        )
+        if enabled:
+            exe_path = sys.executable
+            if not os.path.exists(exe_path):
+                logger.error(f"Исполняемый файл не найден: {exe_path}")
+                return False
+            winreg.SetValueEx(key, APP_NAME, 0, winreg.REG_SZ, exe_path)
+            logger.info(f"Автозапуск включён")
+        else:
+            try:
+                winreg.DeleteValue(key, APP_NAME)
+                logger.info("Автозапуск отключён")
+            except FileNotFoundError:
+                pass  # уже отключено
+        winreg.CloseKey(key)
+        return True
+    except Exception as e:
+        logger.exception(f"Ошибка изменения автозапуска: {e}")
+        return False
 
 def get_autostart() -> bool:
-  try:
-      key = winreg.OpenKey(
-          winreg.HKEY_CURRENT_USER,
-          r"Software\Microsoft\Windows\CurrentVersion\Run",
-          0, winreg.KEY_READ 
-      )
-      winreg.QueryValueEx(key, APP_NAME) 
-      return True
-  except FileNotFoundError:
-      logger.info("Ключ автостарта не найден")
-      return False
+    """Проверяет, включён ли автозапуск. Возвращает True, если запись существует и файл доступен."""
+    try:
+        key = winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\CurrentVersion\Run",
+            0, winreg.KEY_READ
+        )
+        try:
+            value, _ = winreg.QueryValueEx(key, APP_NAME)
+            winreg.CloseKey(key)
+            return os.path.exists(value)
+        except FileNotFoundError:
+            winreg.CloseKey(key)
+            return False
+    except FileNotFoundError:
+        return False
+    except Exception as e:
+        logger.exception(f"Ошибка проверки автозапуска: {e}")
+        return False

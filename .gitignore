@@ -4,3 +4,4 @@
 *$py.class
 /backend/logs
 /backend/config.json
+/frontend/node_modules

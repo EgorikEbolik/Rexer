@@ -21,4 +21,3 @@ def get_resources_folder() -> Path:
 
 
 
-print(get_resources_folder())

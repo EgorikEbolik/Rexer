@@ -30,6 +30,7 @@ class Settings:
       config_path.parent.mkdir(parents=True, exist_ok=True)
       with open(config_path, 'w') as file:
         json.dump(self.data, file, indent=2)
+      logger.info(f"Настройки сохранены!")
     except (PermissionError, IOError) as e:
       logger.error(f"Нет доступа к файлу настроек {config_path}: {e}")
     except Exception as e:
@@ -43,8 +44,10 @@ class Settings:
       with open(config_path) as file:
         config: dict= json.load(file)
       self.data = {**self.DEFAULTS, **config}
+      logger.info("Загружены пользовательские настройки")
     else:
       self.data = self.DEFAULTS.copy()
       self.save()
+      logger.info("Пользовательские настройки отсутствуют, загружены стандартные")
 
 settings = Settings()
