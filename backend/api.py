@@ -152,7 +152,7 @@ async def websocket_endpoint(ws: WebSocket):
         logger.error(f"Ошибка WebSocket : {e}")
         manager.disconnect(ws)    
 
-static_dir = get_static_dir() / "static"
+static_dir = get_static_dir() 
 logger.info(f"Static dir: {static_dir} существет: {static_dir.exists()}")
 print(f"Static dir: {static_dir} существет: {static_dir.exists()}")
 if getattr(sys, 'frozen', False):

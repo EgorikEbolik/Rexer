@@ -14,6 +14,7 @@ dependencies = [
     "pywin32>=311",
     "sounddevice>=0.5.5",
     "soundfile>=0.13.1",
+    "tendo>=0.3.0",
     "uvicorn>=0.42.0",
     "watchdog>=6.0.0",
     "websockets>=16.0",

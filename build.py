@@ -14,24 +14,22 @@ subprocess.run(["npm", "run", "build"], cwd="frontend", check=True, shell=True)
 print("Собираем .exe...")
 subprocess.run([
     "uv", "run", "pyinstaller",
-    "--onefile",
+    "--onedir",
     "--windowed",
     "--icon=resources/icon.ico",
-    "--add-data", "resources/icon.ico;resources",
+    "--add-data", "resources;resources",
     "--add-data", "frontend/dist;static",
     "--name", "Rexer",
     "backend/main.py"
 ], check=True, shell=True)
 
+# Копируем всю папку сборки
 output = Path("release")
 if output.exists():
     shutil.rmtree(output)
-output.mkdir()
 
-shutil.copy("dist/Rexer.exe", output / "Rexer.exe")
-
-resources = output / "resources"
-resources.mkdir()
-shutil.copy("resources/done.wav", resources / "done.wav")
+# Исходная папка после сборки: dist/Rexer/
+src = Path("dist/Rexer")
+shutil.copytree(src, output)
 
 print(f"Готово! Папка: {output.absolute()}")

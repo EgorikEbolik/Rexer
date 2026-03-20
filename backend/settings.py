@@ -1,4 +1,4 @@
-from paths import get_config_path, get_resources_folder
+from paths import get_config_path, get_bundled_resources_folder
 from loguru import logger
 
 import json
@@ -10,7 +10,7 @@ class Settings:
         "watch_folder": f"{Path.home() / 'Videos/Recordings'}",
         "dest_folder": f"{Path.home() / 'Videos/Clips'}",
         "sort_by_game": False,
-        "sound_file": str(get_resources_folder() / 'done.wav'),
+        "sound_file": str(get_bundled_resources_folder() / 'done.wav'),
         "sound_enabled": True,
         "sound_volume": 0.5,
         "filename_template": "{window} {day}-{month}-{year} {hour}-{min}-{sec}",

@@ -36,4 +36,3 @@ def get_bundled_resources_folder() -> Path:
     else:
         return get_app_dir().parent / "resources"
 
-print(get_app_dir())
