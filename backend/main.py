@@ -3,6 +3,7 @@ import threading
 import uvicorn
 import ctypes
 
+from webviewManager import run_webview
 from logger import setup_logger
 from settings import settings
 from monitor import start_monitor
@@ -23,7 +24,10 @@ monitor_thread = threading.Thread(target=start_monitor, daemon=True)
 monitor_thread.start()
 api_thread = threading.Thread(target=start_api, daemon=True)
 api_thread.start()
-icon = create_tray()
-icon.run()
+
+tray_icon = create_tray()
+tray_thread = threading.Thread(target=tray_icon.run, daemon=False)
+tray_thread.start()
+run_webview()
 
 logger.info("Приложение завершено")

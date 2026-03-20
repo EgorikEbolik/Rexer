@@ -1,15 +1,16 @@
+import sys
 from typing import Any, List
 from loguru import logger
 import win32gui
 from win32com.shell import shell, shellcon
 import asyncio
-
-
 from pathlib import Path
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
+from paths import get_static_dir
 from settings import settings, Settings
 
 
@@ -151,6 +152,11 @@ async def websocket_endpoint(ws: WebSocket):
         logger.error(f"Ошибка WebSocket : {e}")
         manager.disconnect(ws)    
 
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run(app, host="127.0.0.1", port=8765)
+static_dir = get_static_dir() / "static"
+logger.info(f"Static dir: {static_dir} существет: {static_dir.exists()}")
+print(f"Static dir: {static_dir} существет: {static_dir.exists()}")
+if getattr(sys, 'frozen', False):
+    logger.info(f"MEIPASS: {sys._MEIPASS}")
+    print(f"MEIPASS: {sys._MEIPASS}")
+if static_dir.exists():
+    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")

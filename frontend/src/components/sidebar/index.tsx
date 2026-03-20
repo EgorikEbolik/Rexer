@@ -6,36 +6,61 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { Settings, Video } from "lucide-react";
 import { ThemeToggle } from "../themeProvider/theme-toggle";
 import { Link } from "react-router";
 
+const COLLAPSE_BREAKPOINT = 900;
 
-const AppSidebar: React.FC = () => {
+const AppSidebarInner: React.FC = () => {
+  const { setOpen, state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+
+  React.useEffect(() => {
+    const update = () => {
+      setOpen(window.innerWidth >= COLLAPSE_BREAKPOINT);
+    };
+
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [setOpen]);
+
   return (
-    <Sidebar className="border-r bg-sidebar">
-      <SidebarHeader>
-        <div className="p-4 flex items-center justify-between">
-          <h1 className="m-0 text-xl font-bold --sidebar-primary ">Rexer</h1>
+    <Sidebar className="border-r bg-sidebar" collapsible="icon">
+      <SidebarHeader draggable="false" unselectable="on">
+        <div className="p-0 lg:p-4 flex items-center justify-between overflow-hidden">
+          <h1 className="m-0 text-xl font-bold truncate group-data-[collapsible=icon]:hidden">Rexer</h1>
           <ThemeToggle />
         </div>
       </SidebarHeader>
-      <SidebarContent className="p-6">
-        <SidebarMenu className="gap-8">
+      <SidebarContent className="p-2">
+        <SidebarMenu className="gap-2">
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link to="/clips" className="flex items-center gap-2 p-0!">
-                <Video className="h-4 w-4" />
-                <span className="text-2xl">Клипы</span>
+            <SidebarMenuButton asChild draggable={false} className={`${isCollapsed ? "" : "p-10! pl-2!"}`}>
+              <Link
+                to="/clips"
+                className={`flex gap-2 ${isCollapsed ? "justify-center p-0!" : "items-center pl-2"}`}
+              >
+                <Video className={isCollapsed ? "size-6!" : "size-4!"} />
+                {!isCollapsed && (
+                  <span className="text-2xl" unselectable="on" draggable="false">Клипы</span>
+                )}
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link to="/settings" className="flex items-center gap-2 p-0!">
-                <Settings className="h-4 w-4" />
-                <span className="text-2xl">Настройки</span>
+            <SidebarMenuButton asChild draggable={false} className={`${isCollapsed ? "" : "p-10! pl-2!"}`}>
+              <Link
+                to="/settings"
+                className={`flex gap-2 ${isCollapsed ? "justify-center p-0!" : "items-center pl-2"}`}
+              >
+                <Settings className={isCollapsed ? "size-6!" : "size-4!"} />
+                {!isCollapsed && (
+                  <span className="text-2xl" unselectable="on" draggable="false">Настройки</span>
+                )}
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -45,4 +70,6 @@ const AppSidebar: React.FC = () => {
   );
 };
 
-export default AppSidebar
+const AppSidebar: React.FC = () => <AppSidebarInner />;
+
+export default AppSidebar;

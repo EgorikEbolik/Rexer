@@ -86,7 +86,7 @@ const ClipsPage: React.FC = () => {
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
         <Film className="h-12 w-12 opacity-20" />
         <p>Клипов пока нет</p>
-        <p className="text-xs">Сохраните реплей в OBS — он появится здесь</p>
+        <p className="text-xs">Сохраните реплей в OBS - он появится здесь</p>
       </div>
     );
   }
