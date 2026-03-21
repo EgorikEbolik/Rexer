@@ -1,0 +1,51 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - name: 📥 Исходный код
+        uses: actions/checkout@v4
+
+      - name: 🐍 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 🟢 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 🦀 Установка uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: 📦 Установка зависимостей через uv
+        run: |
+          uv sync
+          uv pip install pyinstaller
+
+      - name: 🔨 Сборка проекта
+        run: uv run python build.py
+
+      - name: 📦 Архивация
+        run: |
+          cd release
+          7z a -tzip ../Rexer-Windows.zip .
+          cd ..
+
+      - name: 🚀 Создание релиза
+        uses: softprops/action-gh-release@v1
+        with:
+          files: Rexer-Windows.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
