@@ -6,18 +6,12 @@ from fileProcessor import rename_file
 from windowHandler import get_active_window
 from settings import settings
 
-from utils import create_folder
+from utils import VIDEO_EXTENSIONS, create_folder
 
 class Monitor(watchdog.events.PatternMatchingEventHandler):
     
-    video_extensions : list =  [
-      '*.mp4', '*.avi', '*.mov', '*.mkv', '*.wmv', '*.flv', '*.webm',
-      '*.m4v', '*.mpg', '*.mpeg', '*.3gp', '*.ogv', '*.vob', '*.ts',
-      '*.m2ts', '*.mts', '*.rm', '*.rmvb', '*.divx', '*.xvid'
-    ]
-
     def __init__(self):
-      super().__init__(patterns=self.video_extensions,
+      super().__init__(patterns=VIDEO_EXTENSIONS,
                           ignore_directories=True, case_sensitive=False)
 
     def on_created(self, event):

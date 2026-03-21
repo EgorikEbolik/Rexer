@@ -24,9 +24,6 @@ def open_clips_folder():
 def open_last_clip():
   os.startfile(last_clip_path)
 
-def get_last_clip_title(item):
-    return f"Последний клип: {last_clip or 'нет'}"
-
 def update_last_clip(clip_name: str, clip_path):
     global last_clip, last_clip_path, tray_icon
     last_clip = clip_name
@@ -37,9 +34,9 @@ def update_last_clip(clip_name: str, clip_path):
 
 def build_menu():
     return pystray.Menu(
-        pystray.MenuItem("Открыть", lambda: open_ui()),
-        pystray.MenuItem("Открыть папку с клипами", lambda: open_clips_folder()),
-        pystray.MenuItem(f"Последний клип: {last_clip or 'нет'}", lambda: open_last_clip()),
+        pystray.MenuItem("Открыть", open_ui, default=True),
+        pystray.MenuItem("Открыть папку с клипами", open_clips_folder),
+        pystray.MenuItem(f"Последний клип: {last_clip or 'нет'}", open_last_clip),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("Выход", on_exit),
     )

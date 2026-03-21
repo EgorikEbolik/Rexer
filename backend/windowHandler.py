@@ -46,14 +46,3 @@ def get_active_window():
   logger.debug(f"HWIND: {hwnd}, procesID: {proces_id}, process: {process}, name: {product_name}")
   logger.info(f"Текущее окно: {product_name}, процесс: {process}")
   return product_name
-
-
-
-# if __name__ == "__main__":
-#     import time
-#     try:
-#       while True:
-#         get_active_window()
-#         time.sleep(2)
-#     except KeyboardInterrupt as keyboard:
-#       logger.debug("Пользователь остановил определение окна")

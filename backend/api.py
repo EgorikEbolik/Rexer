@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from utils import VIDEO_EXTENSIONS
 from paths import get_static_dir
 from settings import settings, Settings
 
@@ -55,11 +56,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-def _run_dialog(dialog_fn, result_holder, event):
-    result_holder["path"] = dialog_fn()
-    event.set()
-
 
 def open_folder_dialog() -> str:
     try:
@@ -109,7 +105,6 @@ def get_defaults():
 
 @app.get("/clips")
 def get_clips():
-    VIDEO_EXTENSIONS = {".mp4", ".mkv"}
     dest_folder = Path(settings.data["dest_folder"])
     clips = []
     

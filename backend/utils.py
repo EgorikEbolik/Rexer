@@ -5,11 +5,12 @@ import sounddevice as sd
 import soundfile as sf
 from loguru import logger
 import os
-from typing import Optional
 
 from settings import settings
 
 APP_NAME = "Rexer"
+VIDEO_EXTENSIONS : list =  ['*.mp4', '*.mov', '*.mkv', '*.webm', '*.m4v']
+
 
 def create_folder(folder_path: Path | str) -> bool:
     """Создаёт папку, если её нет. Возвращает True при успехе или если папка уже существует."""
@@ -24,7 +25,7 @@ def create_folder(folder_path: Path | str) -> bool:
         logger.exception(f"Ошибка при создании папки {folder_path}: {e}")
         return False
 
-def play_sound(sound_file: str | Path, volume: Optional[float] = None) -> bool:
+def play_sound(sound_file: str | Path, volume: float = None) -> bool:
     """Воспроизводит звуковой файл с заданной громкостью. Возвращает True при успехе."""
     try:
         sound_path = Path(sound_file)
@@ -62,7 +63,7 @@ def set_autostart(enabled: bool) -> bool:
                 winreg.DeleteValue(key, APP_NAME)
                 logger.info("Автозапуск отключён")
             except FileNotFoundError:
-                pass  # уже отключено
+                pass 
         winreg.CloseKey(key)
         return True
     except Exception as e:

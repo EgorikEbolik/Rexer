@@ -3,7 +3,6 @@ from time import sleep
 from loguru import logger
 from datetime import datetime
 import asyncio
-import os
 
 from tray import update_last_clip
 from utils import play_sound
