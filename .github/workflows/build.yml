@@ -23,6 +23,10 @@ jobs:
         with:
           node-version: '20'
 
+      - name: 📦 Зависимости фронтенда
+        run: npm ci
+        working-directory: frontend
+      
       - name: 🦀 Установка uv
         uses: astral-sh/setup-uv@v3
         with:
