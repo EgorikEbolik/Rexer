@@ -2,16 +2,16 @@ import subprocess
 import shutil
 from pathlib import Path
 
-print("Чистим старые сборки...")
+print("removing old builds") 
 for folder in ["dist", "build", "frontend/dist", "release"]:
     if Path(folder).exists():
         shutil.rmtree(folder)
-        print(f"  Удалено: {folder}")
+        print(f"  Deleted: {folder}")
 
-print("Собираем фронт...")
+print("frontend") 
 subprocess.run(["npm", "run", "build"], cwd="frontend", check=True, shell=True)
 
-print("Собираем .exe...")
+print(".exe") 
 subprocess.run([
     "uv", "run", "pyinstaller",
     "--onedir",
@@ -23,13 +23,11 @@ subprocess.run([
     "backend/main.py"
 ], check=True, shell=True)
 
-# Копируем всю папку сборки
 output = Path("release")
 if output.exists():
     shutil.rmtree(output)
 
-# Исходная папка после сборки: dist/Rexer/
 src = Path("dist/Rexer")
 shutil.copytree(src, output)
 
-print(f"Готово! Папка: {output.absolute()}")
+print(f"Done! {output.absolute()}") 
