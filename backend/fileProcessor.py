@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 from time import sleep
 from loguru import logger
 from datetime import datetime
@@ -152,7 +153,7 @@ def move_file(source_file_path, window):
         logger.warning(f"Файл {new_file} уже существует, будет перезаписан")
 
     try:
-        file_path.replace(new_file)
+        shutil.move(str(file_path), str(new_file))
         logger.info(f"Файл {source_file_path} перемещён в {new_file}")
     except Exception as e:
         logger.error(f"Ошибка при перемещении файла: {e}")

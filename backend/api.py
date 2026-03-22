@@ -14,6 +14,7 @@ from utils import VIDEO_EXTENSIONS
 from paths import get_static_dir
 from settings import settings, Settings
 
+EXTENSIONS = [extension.replace("*","") for extension in VIDEO_EXTENSIONS]
 
 class ConnectionManager:
     def __init__(self):
@@ -108,18 +109,16 @@ def get_clips():
     dest_folder = Path(settings.data["dest_folder"])
     clips = []
     
-    for file in dest_folder.rglob("*.mp4"):
-        if file.suffix.lower() in VIDEO_EXTENSIONS:
-          clips.append({
-              "name": file.stem,
-              "filename": file.name,
-              "path": str(file),
-              "size_mb": round(file.stat().st_size / (1024 * 1024), 2),
-              "created_at": file.stat().st_mtime,
-              "game": file.parent.name if settings.data["sort_mode"] == "game" else None
-          })
-    
-    clips.sort(key=lambda x: x["created_at"], reverse=True)
+    for ext in EXTENSIONS:
+        for file in dest_folder.rglob(f"*{ext}"):
+            clips.append({
+                "name": file.stem,
+                "filename": file.name,
+                "path": str(file),
+                "size_mb": round(file.stat().st_size / (1024 * 1024), 2),
+                "created_at": file.stat().st_mtime,
+                "game": file.parent.name if settings.data["sort_mode"] == "game" else None
+            })
     return clips
 
 @app.get("/clips/stream")

@@ -55,7 +55,7 @@ const VideoCard: React.FC<{ clip: Clip, api: string, onClick: () => void }> = ({
         <p className="text-sm font-medium leading-tight line-clamp-2 text-foreground">
           {clip.name}
         </p>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex justify-between items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <HardDrive className="h-3 w-3" />
             {formatSize(clip.size_mb)}
