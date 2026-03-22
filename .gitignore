@@ -35,3 +35,4 @@ desktop.ini
 htmlcov/
 build/
 /backend/bin
+backend/cache/

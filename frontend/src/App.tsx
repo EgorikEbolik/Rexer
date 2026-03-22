@@ -101,7 +101,10 @@ const App: React.FC = () => {
                         : `Скачивание... ${ffmpegProgress}%`}
                     </p>
                   </div>
-                  <Progress value={ffmpegStatus === "downloading" ? ffmpegProgress : undefined} />
+                  <Progress value={ffmpegStatus === "downloading" ? ffmpegProgress : undefined} />                            <p className="text-xs text-muted-foreground mt-2!">
+                    Подсказка: программа ffmpeg позволяет преобразовывать видео, получать из них изображения и многое другое...
+                  </p>
+
                 </>
               )}
               {

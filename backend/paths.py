@@ -19,7 +19,6 @@ def get_config_path() -> Path:
   return config_path
 
 def get_cache_dir() -> Path: return get_app_dir() / "cache"
-def get_thumbnails_cache_dir() -> Path: return get_cache_dir() / "thumbnails"
 def get_bin_dir() -> Path: return get_app_dir() / "bin"
 
 def get_logs_folder() -> Path:

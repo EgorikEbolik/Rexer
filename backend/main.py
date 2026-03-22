@@ -4,6 +4,7 @@ import uvicorn
 import ctypes
 from tendo import singleton
 
+from thumbnailsManager import clean_thumbnails
 from webviewManager import run_webview
 from logger import setup_logger
 from settings import settings
@@ -23,6 +24,8 @@ try:
     settings.data["autostart"] = get_autostart()
 
     me = singleton.SingleInstance()
+
+    clean_thumbnails()
 
     monitor_thread = threading.Thread(target=start_monitor, daemon=True)
     monitor_thread.start()

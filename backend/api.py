@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from thumbnailsManager import generate_thumbnail
 from ffmpegManager import ensure_ffmpeg
 from utils import VIDEO_EXTENSIONS
 from paths import get_static_dir
@@ -146,6 +147,13 @@ def stream_clip(path: str):
     if not file.exists():
         return {"error": "Файл не найден"}
     return FileResponse(path)
+
+@app.get("/clips/thumbnail")
+def get_thumbnail(path: str):
+    thumbnail = generate_thumbnail(Path(path))
+    if thumbnail is None:
+        return {"error": "Файл не найден"}
+    return FileResponse(str(thumbnail))
 
 @app.post("/settings")
 def update_settings(new_settings: dict[str, Any]):
