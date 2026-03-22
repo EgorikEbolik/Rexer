@@ -1,14 +1,21 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useCallback } from "react";
 import { Film, Loader2 } from "lucide-react";
 import VideoCard, { type Clip } from "@/components/videoGrid/videoCard";
 import PlayerModal from "@/components/videoGrid/player";
+import { useOutletContext } from "react-router";
+
+type OutletContext = {
+  clips: Clip[]
+  setClips: React.Dispatch<React.SetStateAction<Clip[]>>
+  onNewClip: (clip: Clip) => void
+}
 
 const ClipsPage: React.FC = () => {
-  const API = "http://127.0.0.1:8765";
+  const API = "http://localhost:8765";
 
-  const [clips, setClips] = useState<Clip[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Clip | null>(null);
+  const { clips, setClips } = useOutletContext<OutletContext>()
+  const [loading, setLoading] = React.useState(true);
+  const [selected, setSelected] = React.useState<Clip | null>(null);
 
   useEffect(() => {
     const fetchClips = async () => {
@@ -19,56 +26,15 @@ const ClipsPage: React.FC = () => {
         }
         const data = await response.json();
         setClips(data);
+        console.log("Новый клип:", data)
       } catch (error) {
         console.error("Ошибка загрузки клипов:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchClips();
-
-    let ws: WebSocket | null = null;
-    let reconnectTimer: ReturnType<typeof setTimeout>;
-    const connectWebSocket = () => {
-      if (ws && ws.readyState !== WebSocket.CLOSED) {
-        ws.close();
-      }
-      ws = new WebSocket("ws://localhost:8765/ws");
-      ws.onopen = () => {
-        console.log("WebSocket connected");
-      };
-      ws.onmessage = (e) => {
-        console.log("WebSocket message:", e.data);
-        try {
-          const data = JSON.parse(e.data);
-          if (data.type === "new_clip") {
-            setClips(prev => [data.clip, ...prev]);
-          }
-        } catch (err) {
-          console.error("Failed to parse WebSocket message", err);
-        }
-      };
-
-      ws.onerror = (err) => {
-        console.error("WebSocket error", err);
-      };
-
-      ws.onclose = (event) => {
-        console.log(`WebSocket closed (code ${event.code}), reconnecting in 3s...`);
-        reconnectTimer = setTimeout(connectWebSocket, 3000);
-      };
-    };
-
-    connectWebSocket();
-
-    return () => {
-      clearTimeout(reconnectTimer);
-      if (ws && ws.readyState !== WebSocket.CLOSED) {
-        ws.close();
-      }
-    };
-  }, [API]);
+  }, [API, setClips]);
 
   const closeModal = useCallback(() => setSelected(null), []);
 

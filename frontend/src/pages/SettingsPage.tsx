@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Folder, Volume2, FileVideo, SortAsc, Play, Save, RotateCcw } from "lucide-react";
 import PathInput from "@/components/PathInput";
 
-const API = "http://127.0.0.1:8765";
+const API = "http://localhost:8765";
 
 interface Settings {
   watch_folder: string;

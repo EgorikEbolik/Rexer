@@ -6,7 +6,7 @@ def run_webview():
     global _window
     _window = webview.create_window("Rexer", "http://127.0.0.1:8765")
     _window.events.closing += on_closing 
-    webview.start(debug=True)
+    webview.start()
 
 def on_closing():
     if _window:

@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 import sys
 from typing import Any, List
 from loguru import logger
@@ -10,6 +11,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from ffmpegManager import ensure_ffmpeg
 from utils import VIDEO_EXTENSIONS
 from paths import get_static_dir
 from settings import settings, Settings
@@ -45,11 +47,27 @@ manager = ConnectionManager()
 async def _set_loop():
     loop = asyncio.get_running_loop()
     manager.set_loop(loop)
-    logger.debug(f"looo установлен: {loop}")
+    logger.debug(f"loop установлен: {loop}")
+
+def make_broadcast_fn(loop, manager):
+    def broadcast_fn(data: dict):
+        asyncio.run_coroutine_threadsafe(manager.broadcast(data), loop)
+    return broadcast_fn
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await _set_loop()
+    asyncio.create_task(delayed_ffmpeg_check())
+    yield
+
+async def delayed_ffmpeg_check():
+    await asyncio.sleep(3)
+    loop = asyncio.get_running_loop()
+    broadcast_fn = make_broadcast_fn(loop, manager)
+    await asyncio.to_thread(ensure_ffmpeg, broadcast_fn)
 
 
-app = FastAPI()
-app.router.on_startup.append(_set_loop)
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -84,6 +102,7 @@ def open_file_dialog() -> str:
     except Exception:
         pass
     return ""
+
 
 
 @app.get("/browse/folder")

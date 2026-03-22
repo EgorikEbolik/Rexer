@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const API = "http://127.0.0.1:8765";
+const API = "http://localhost:8765";
 
 export interface Settings {
   watch_folder: string;

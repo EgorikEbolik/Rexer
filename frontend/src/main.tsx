@@ -1,5 +1,5 @@
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 
 
 
@@ -14,9 +14,9 @@ ReactDOM.createRoot(root).render(
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<App />}>
+        <Route index element={<Navigate to="/clips" replace />} />
         <Route path="clips" element={<ClipsPage />} />
         <Route path="settings" element={<SettingsPage />} />
-
       </Route>
     </Routes>
   </BrowserRouter>

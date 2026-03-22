@@ -25,6 +25,7 @@ def notify_new_clip(clip_data: dict):
             manager.broadcast({"type": "new_clip", "clip": clip_data}),
             manager.loop
         )
+        logger.debug(f"notify_new_clip вызван, active={len(manager.active)}, loop={manager.loop}")
     except RuntimeError as e:
         logger.error(f"Не удалось отправить уведомление: {e} (возможно, цикл событий закрыт)")
     except Exception as e:

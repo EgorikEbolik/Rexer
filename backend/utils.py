@@ -1,6 +1,7 @@
 from pathlib import Path
 import winreg
 import sys
+import requests
 import sounddevice as sd
 import soundfile as sf
 from loguru import logger
@@ -90,3 +91,23 @@ def get_autostart() -> bool:
     except Exception as e:
         logger.exception(f"Ошибка проверки автозапуска: {e}")
         return False
+    
+def download_file(url: str, dest: Path, timeout = 60, on_progress=None) -> None:
+    """Скачивает файл по url"""
+    logger.info(f"Загрузка: {url}")
+    response = requests.get(url, stream=True, timeout=timeout)
+    response.raise_for_status()
+
+    total = int(response.headers.get("content-length", 0))
+    downloaded = 0
+
+    with open(dest, "wb") as f:
+        for chunk in response.iter_content(chunk_size=65536):
+            f.write(chunk)
+            downloaded += len(chunk)
+            if total:
+                progerss = downloaded * 100 // total
+                logger.debug(f"Загружено: {progerss}%  ({downloaded // 1024 // 1024} МБ / {total // 1024 // 1024} МБ)")
+                if on_progress:
+                    on_progress(progerss)
+    logger.info(f"Файл сохранён: {dest}")
