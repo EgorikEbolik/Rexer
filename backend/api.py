@@ -126,7 +126,7 @@ def stream_clip(path: str):
     file = Path(path)
     if not file.exists():
         return {"error": "Файл не найден"}
-    return FileResponse(path, media_type="video/mp4")
+    return FileResponse(path)
 
 @app.post("/settings")
 def update_settings(new_settings: dict[str, Any]):

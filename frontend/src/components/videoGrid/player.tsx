@@ -7,9 +7,13 @@ import { MediaPlayer, MediaProvider } from '@vidstack/react';
 import { defaultLayoutIcons, DefaultVideoLayout } from '@vidstack/react/player/layouts/default';
 import '@vidstack/react/player/styles/default/theme.css';
 import '@vidstack/react/player/styles/default/layouts/video.css';
+import { useSettings } from "@/hooks/useSettings";
 
 const PlayerModal: React.FC<{ clip: Clip, api: string, onClose: () => void }> = ({ clip, api, onClose }) => {
   const streamUrl = `${api}/clips/stream?path=${encodeURIComponent(clip.path)}`;
+
+  const settings = useSettings();
+  const volume = settings?.sound_volume ?? 0.35;
 
   const formatDate = (ts: number) =>
     new Date(ts * 1000).toLocaleString("ru-RU", {
@@ -53,7 +57,7 @@ const PlayerModal: React.FC<{ clip: Clip, api: string, onClose: () => void }> = 
         </div>
 
         {/* Плеер */}
-        <MediaPlayer src={streamUrl} autoPlay volume={0.35} playsInline>
+        <MediaPlayer src={streamUrl} autoPlay volume={volume} playsInline>
           <MediaProvider />
           <DefaultVideoLayout icons={defaultLayoutIcons} />
         </MediaPlayer>
