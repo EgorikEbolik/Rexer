@@ -32,6 +32,7 @@
 ## TODO
 
 - [ ] Превью клипа (извлечение первого кадра через ffmpeg)
+- [ ] Превью при наведении на клип
 - [ ] Превью на таймлайне плеера (спрайты через ffmpeg)
 - [ ] Обработка дубликатов файлов
 - [ ] Пользовательский словарь игр (games.json)
@@ -41,9 +42,9 @@
 
 ## Стек
 
-**Бэкенд:** Python 3.11, FastAPI, watchdog, pywin32, psutil, pystray, loguru, pywebview
+**Бэкенд:** Python 3.11, FastAPI, watchdog, pywin32, psutil, pystray, loguru, pywebview, ffmpeg-python
 
-**Фронтенд:** React, TypeScript, Vite, Tailwind CSS, shadcn/ui, vidstack
+**Фронтенд:** React, TypeScript, Vite, Tailwind CSS, shadcn/ui, vidstack, react-virtuoso
 
 ## Структура
 

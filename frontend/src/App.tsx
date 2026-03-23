@@ -71,7 +71,7 @@ const App: React.FC = () => {
       enableSystem={false}
     >
       <SidebarProvider onContextMenu={handleContextMenu} defaultOpen={true}>
-        <div className="flex min-h-screen w-full">
+        <div className="flex min-h-screen w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none">
           <AppSidebar />
           <main className="flex-1 p-6 min-w-0">
             <Outlet context={{ onNewClip, clips, setClips }} />

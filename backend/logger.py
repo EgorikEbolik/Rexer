@@ -7,15 +7,14 @@ def setup_logger():
 
   logger.add(
     sys.stderr,
-    format="{time:DD.MM.YYYY HH:mm:ss} | {level} | {message}",
+    format="{time:DD.MM.YYYY HH:mm:ss} | {level} | {file}:{line} | {message}",
     level="DEBUG"
   )
 
   logger.add(
     get_logs_folder() / "log.log",
-    format="{time:DD.MM.YYYY HH:mm:ss} | {level} | {message}",
+    format="{time:DD.MM.YYYY HH:mm:ss} | {level} | {file}:{line} | {message}",
     level="INFO",
     rotation="00:00",
     retention="7 days",
-    
   )

@@ -1,3 +1,6 @@
+import subprocess
+import sys
+
 from utils import VIDEO_EXTENSIONS
 from paths import get_cache_dir
 from ffmpegManager import get_ffmpeg_bin
@@ -15,8 +18,17 @@ def get_thumbnail_path(clip_path: Path) -> Path:
   path_hash = get_cache_dir() / md5_hash / "thumbnail.jpg"
   return path_hash
 
-def generate_thumbnail(clip_path:Path):
+def generate_thumbnail(clip_path:Path, thumbnail_width: int = 450):
   clip_path = Path(clip_path)
+
+  run_kwargs = {
+    'cmd': get_ffmpeg_bin(),
+    'quiet': True
+  }
+  if sys.platform == 'win32':
+    run_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+
+
   try:
     thumbnail_path = get_thumbnail_path(clip_path)
     if thumbnail_path.exists():
@@ -24,12 +36,24 @@ def generate_thumbnail(clip_path:Path):
       return thumbnail_path
     
     thumbnail_path.parent.mkdir(parents=True, exist_ok=True)
-    (
-      ffmpeg
-      .input(clip_path)
-      .output(str(thumbnail_path), vframes=1)
-      .run(cmd=get_ffmpeg_bin(),quiet=True)
+    stream = (
+        ffmpeg
+        .input(str(clip_path))
+        .filter("scale", thumbnail_width, -1)
+        .output(str(thumbnail_path), vframes=1)
     )
+    
+    args = ffmpeg.compile(stream, cmd=get_ffmpeg_bin())
+    
+    run_kwargs = {
+        'stdout': subprocess.DEVNULL,
+        'stderr': subprocess.DEVNULL,
+        'stdin': subprocess.DEVNULL,
+    }
+    if sys.platform == 'win32':
+        run_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+    
+    subprocess.run(args, **run_kwargs)
     logger.debug(f"Создана обложка {thumbnail_path} для видео {clip_path.stem}")
     return thumbnail_path
   except Exception as e:
@@ -38,6 +62,7 @@ def generate_thumbnail(clip_path:Path):
 
 def clean_thumbnails():
   dest_folder = settings.data["dest_folder"]
+  get_cache_dir().mkdir(parents=True, exist_ok=True)
   hash_set = set()
   deleted_set = set()
 
