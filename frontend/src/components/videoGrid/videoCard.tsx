@@ -1,5 +1,6 @@
 import { Calendar, HardDrive, Play } from "lucide-react";
-import { Badge } from "../ui/badge";
+import React from "react";
+// import { Badge } from "../ui/badge";
 
 
 export interface Clip {
@@ -11,7 +12,51 @@ export interface Clip {
   game: string | null;
 }
 
-const VideoCard: React.FC<{ clip: Clip, api: string, onClick: () => void }> = ({ clip, api, onClick }) => {
+const VideoCard: React.FC<{ clip: Clip; api: string; hoverPlaybackEnabled: boolean; onClick: () => void }> = ({ clip, api, hoverPlaybackEnabled, onClick }) => {
+  const [shouldPlay, setShouldPlay] = React.useState(false);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const hoverTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    setShouldPlay(false);
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+  }, [clip]);
+
+  React.useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (shouldPlay) {
+      video.play().catch(err => console.debug("Playback prevented:", err));
+    } else {
+      video.pause();
+      video.currentTime = 0;
+    }
+  }, [shouldPlay]);
+
+  const handleMouseEnter = () => {
+    if (!hoverPlaybackEnabled || shouldPlay) return;
+    hoverTimer.current = setTimeout(() => {
+      setShouldPlay(true);
+    }, 800);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+    setShouldPlay(false);
+  };
 
   const formatDate = (ts: number) =>
     new Date(ts * 1000).toLocaleString("ru-RU", {
@@ -29,27 +74,38 @@ const VideoCard: React.FC<{ clip: Clip, api: string, onClick: () => void }> = ({
 
   return (
     <div
-      className="group relative rounded-lg overflow-hidden bg-card border border-border cursor-pointer hover:border-primary/50 transition-all duration-200 hover:shadow-lg hover:shadow-black/20"
+      className="group relative rounded-lg bg-card border border-border cursor-pointer hover:border-primary/50 transition-all duration-200 hover:shadow-lg hover:shadow-black/20"
       onClick={onClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
-      {/* Превью */}
       <div className="relative aspect-video bg-muted">
-        <img
-          src={thumbnailUrl}
-          alt={clip.name}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = "none";
-          }}
-        />
-        {/* Оверлей при hover */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-            <Play className="h-6 w-6 text-white fill-white" />
+        {hoverPlaybackEnabled ? (
+          <video
+            ref={videoRef}
+            poster={thumbnailUrl}
+            src={shouldPlay ? `${api}/clips/stream?path=${encodeURIComponent(clip.path)}` : undefined}
+            className="w-full h-full object-cover"
+            muted
+            loop
+            onError={(e) => { (e.target as HTMLVideoElement).style.display = "none"; }}
+          />
+        ) : (
+          <img
+            src={thumbnailUrl}
+            alt={clip.name}
+            className="w-full h-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+        )}
+        {!hoverPlaybackEnabled && (
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
+              <Play className="h-6 w-6 text-white fill-white" />
+            </div>
           </div>
-        </div>
+        )}
       </div>
-
       {/* Инфо */}
       <div className="p-3 space-y-1.5">
         <p className="text-sm font-medium leading-tight line-clamp-2 text-foreground">
@@ -65,14 +121,10 @@ const VideoCard: React.FC<{ clip: Clip, api: string, onClick: () => void }> = ({
             {formatDate(clip.created_at)}
           </span>
         </div>
-        {clip.game && (
-          <Badge variant="secondary" className="text-xs">
-            {clip.game}
-          </Badge>
-        )}
       </div>
     </div>
   );
 };
+
 
 export default VideoCard

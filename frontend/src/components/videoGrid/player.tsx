@@ -10,11 +10,10 @@ import '@vidstack/react/player/styles/default/layouts/video.css';
 import { useSettings } from "@/hooks/useSettings";
 
 const PlayerModal: React.FC<{ clip: Clip, api: string, onClose: () => void }> = ({ clip, api, onClose }) => {
+  const { settings } = useSettings()
+
   const streamUrl = `${api}/clips/stream?path=${encodeURIComponent(clip.path)}`;
-
-  const settings = useSettings();
   const volume = settings?.sound_volume ?? 0.35;
-
   const formatDate = (ts: number) =>
     new Date(ts * 1000).toLocaleString("ru-RU", {
       day: "2-digit",

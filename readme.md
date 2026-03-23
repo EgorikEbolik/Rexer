@@ -51,16 +51,18 @@
 ```
 Rexer/
 ├── backend/
-│   ├── main.py           # точка входа
-│   ├── api.py            # FastAPI + WebSocket
-│   ├── monitor.py        # слежка за папкой
-│   ├── fileProcessor.py  # переименование и перемещение
-│   ├── windowHandler.py  # определение активного окна
-│   ├── settings.py       # настройки приложения
-│   ├── paths.py          # пути файловой системы
-│   ├── logger.py         # логирование
-│   ├── tray.py           # иконка в трее
-│   └── utils.py          # вспомогательные функции
+│   ├── main.py               # точка входа
+│   ├── api.py                # FastAPI + WebSocket
+│   ├── monitor.py            # слежка за папкой
+│   ├── fileProcessor.py      # переименование и перемещение
+│   ├── windowHandler.py      # определение активного окна
+│   ├── settings.py           # настройки приложения
+│   ├── paths.py              # пути файловой системы
+│   ├── logger.py             # логирование
+│   ├── tray.py               # иконка в трее
+│   ├── utils.py              # вспомогательные функции
+│   ├── ffmpegManager.py      # проверка и скачивание ffmpeg
+│   └── thumbnailsManager.py  # создание и очистка обложек 
 ├── frontend/
 │   └── src/
 │       ├── pages/

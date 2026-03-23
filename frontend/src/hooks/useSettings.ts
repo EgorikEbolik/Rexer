@@ -12,12 +12,14 @@ export interface Settings {
   sound_volume: number;
   filename_template: string;
   autostart: boolean;
+  hover_playback: boolean;
 }
 
 let cachedSettings: Settings | null = null;
 
-export const useSettings = (): Settings | null => {
+export const useSettings = () => {
   const [settings, setSettings] = useState<Settings | null>(cachedSettings);
+  const [loading, setLoading] = useState(!cachedSettings);
 
   useEffect(() => {
     if (!cachedSettings) {
@@ -26,10 +28,29 @@ export const useSettings = (): Settings | null => {
         .then((data: Settings) => {
           cachedSettings = data;
           setSettings(data);
+          setLoading(false);
         })
-        .catch(err => console.error('Failed to load settings:', err));
+        .catch(err => {
+          console.error('Не получилось загрузить настройки:', err);
+          setLoading(false);
+        });
     }
   }, []);
 
-  return settings;
-};
+  const reloadSettings = () => {
+    setLoading(true);
+    fetch(`${API}/settings`)
+      .then(res => res.json())
+      .then((data: Settings) => {
+        cachedSettings = data;
+        setSettings(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to load settings:', err);
+        setLoading(false);
+      });
+  };
+
+  return { settings, loading, reloadSettings };
+}

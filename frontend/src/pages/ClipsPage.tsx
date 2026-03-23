@@ -6,12 +6,13 @@ import { useOutletContext } from "react-router";
 import { VirtuosoGrid, type VirtuosoGridProps } from "react-virtuoso"
 import { Button } from "@/components/ui/button";
 
+import { useSettings } from "@/hooks/useSettings";
+
 type OutletContext = {
   clips: Clip[]
   setClips: React.Dispatch<React.SetStateAction<Clip[]>>
   onNewClip: (clip: Clip) => void
 }
-
 
 const gridComponents: VirtuosoGridProps<undefined, undefined>['components'] = {
   List: forwardRef(({ children, ...props }, ref) => (
@@ -30,7 +31,6 @@ const gridComponents: VirtuosoGridProps<undefined, undefined>['components'] = {
   ),
 }
 
-
 const ClipsPage: React.FC = () => {
   const API = "http://localhost:8765";
 
@@ -38,6 +38,8 @@ const ClipsPage: React.FC = () => {
   const [loading, setLoading] = React.useState(true);
   const [selected, setSelected] = React.useState<Clip | null>(null);
   const [sort, setSort] = React.useState<"desc" | "asc">("desc");
+
+  const { settings: settingsData } = useSettings();
 
   const formatter = new Intl.PluralRules("ru");
   const forms = { one: "клип", few: "клипа", many: "клипов", zero: "клипов", two: "клипа", other: "клипов" }
@@ -88,7 +90,8 @@ const ClipsPage: React.FC = () => {
   }
 
   return (
-    <div className="p-6">
+
+    <div className="p-6 flex flex-col h-full">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold flex-4">Клипы</h1>
         <div className="flex flex-col items-center">
@@ -101,14 +104,17 @@ const ClipsPage: React.FC = () => {
       </div>
 
       <VirtuosoGrid
-        style={{ height: "calc(100vh - 280px)" }}
-        className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        // style={{ height: "calc(100vh - 280px)" }}
+        className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-1"
         totalCount={clips.length}
         components={gridComponents}
+        increaseViewportBy={{ top: 800, bottom: 600 }}
         itemContent={(index) =>
           <VideoCard
+            key={clips[index].path}
             api={API}
             clip={clips[index]}
+            hoverPlaybackEnabled={settingsData?.hover_playback ?? true}
             onClick={() => setSelected(clips[index])}
           />}
 

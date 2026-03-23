@@ -15,7 +15,8 @@ class Settings:
         "filename_template": "{window} {day}-{month}-{year} {hour}-{min}-{sec}",
         "sort_date_format": "{year}-{month}",  
         "sort_mode": "date",  # "game", "date", "none"
-        "autostart": False
+        "autostart": False,
+        "hover_playback": True
 
     }
 

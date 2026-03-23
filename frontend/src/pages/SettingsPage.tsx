@@ -7,21 +7,12 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Folder, Volume2, FileVideo, SortAsc, Play, Save, RotateCcw } from "lucide-react";
+import { type Settings } from "@/hooks/useSettings"
+import { useSettings } from "@/hooks/useSettings";
 import PathInput from "@/components/PathInput";
 
 const API = "http://localhost:8765";
 
-interface Settings {
-  watch_folder: string;
-  dest_folder: string;
-  sort_mode: "game" | "date" | "none";
-  sort_date_format: string;
-  sound_enabled: boolean;
-  sound_file: string;
-  sound_volume: number;
-  filename_template: string;
-  autostart: boolean;
-}
 
 const TOKENS = [
   { token: "{window}", desc: "Название окна" },
@@ -38,6 +29,7 @@ const SettingsPage: React.FC = () => {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [defaults, setDefaults] = useState<Settings | null>(null);
+  const { reloadSettings } = useSettings();
 
   useEffect(() => {
     Promise.all([
@@ -63,6 +55,7 @@ const SettingsPage: React.FC = () => {
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+    reloadSettings()
   };
 
   const insertToken = (token: string) => {
@@ -284,7 +277,7 @@ const SettingsPage: React.FC = () => {
               </p>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label>Громкость</Label>
+                  <Label>Громкость по умолчанию</Label>
                   <span className="text-sm text-muted-foreground">
                     {Math.round(settings.sound_volume * 100)}%
                   </span>
@@ -310,7 +303,7 @@ const SettingsPage: React.FC = () => {
             Система
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <Label>Автозапуск с Windows</Label>
@@ -321,6 +314,18 @@ const SettingsPage: React.FC = () => {
             <Switch
               checked={settings.autostart}
               onCheckedChange={(v) => update("autostart", v)}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Автопроигрывание видео</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Воспроизводить видео в сетке при наведении мышью
+              </p>
+            </div>
+            <Switch
+              checked={settings.hover_playback}
+              onCheckedChange={(v) => update("hover_playback", v)}
             />
           </div>
         </CardContent>
