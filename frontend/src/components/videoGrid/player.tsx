@@ -13,6 +13,7 @@ const PlayerModal: React.FC<{ clip: Clip, api: string, onClose: () => void }> = 
   const { settings } = useSettings()
 
   const streamUrl = `${api}/clips/stream?path=${encodeURIComponent(clip.path)}`;
+  const vttUrl = `${api}/clips/tileset/vtt?path=${encodeURIComponent(clip.path)}`;
   const volume = settings?.sound_volume ?? 0.35;
   const formatDate = (ts: number) =>
     new Date(ts * 1000).toLocaleString("ru-RU", {
@@ -41,7 +42,7 @@ const PlayerModal: React.FC<{ clip: Clip, api: string, onClose: () => void }> = 
       onClick={onClose}
     >
       <div
-        className="bg-card rounded-xl overflow-hidden w-full max-w-4xl shadow-2xl"
+        className="bg-card rounded-xl overflow-hidden w-full max-w-6xl shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Шапка */}
@@ -58,8 +59,7 @@ const PlayerModal: React.FC<{ clip: Clip, api: string, onClose: () => void }> = 
         {/* Плеер */}
         <MediaPlayer src={streamUrl} autoPlay volume={volume} playsInline>
           <MediaProvider />
-          <DefaultVideoLayout icons={defaultLayoutIcons} />
-          {/* <DefaultVideoLayout thumbnails="/thumbnails.vtt" icons={defaultLayoutIcons} /> */}
+          <DefaultVideoLayout thumbnails={vttUrl} icons={defaultLayoutIcons} />
         </MediaPlayer>
 
         {/* Инфо */}

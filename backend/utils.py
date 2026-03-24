@@ -10,7 +10,7 @@ import os
 from settings import settings
 
 APP_NAME = "Rexer"
-VIDEO_EXTENSIONS : list =  ['*.mp4', '*.mov', '*.mkv', '*.webm', '*.m4v']
+VIDEO_EXTENSIONS: list = ["*.mp4", "*.mov", "*.mkv", "*.webm", "*.m4v"]
 
 
 def create_folder(folder_path: Path | str) -> bool:
@@ -25,6 +25,7 @@ def create_folder(folder_path: Path | str) -> bool:
     except Exception as e:
         logger.exception(f"Ошибка при создании папки {folder_path}: {e}")
         return False
+
 
 def play_sound(sound_file: str | Path, volume: float = None) -> bool:
     """Воспроизводит звуковой файл с заданной громкостью. Возвращает True при успехе."""
@@ -44,13 +45,15 @@ def play_sound(sound_file: str | Path, volume: float = None) -> bool:
         logger.exception(f"Ошибка воспроизведения звука {sound_file}: {e}")
         return False
 
+
 def set_autostart(enabled: bool) -> bool:
     """Включает/отключает автозапуск в реестре Windows. Возвращает True при успехе."""
     try:
         key = winreg.OpenKey(
             winreg.HKEY_CURRENT_USER,
             r"Software\Microsoft\Windows\CurrentVersion\Run",
-            0, winreg.KEY_SET_VALUE
+            0,
+            winreg.KEY_SET_VALUE,
         )
         if enabled:
             exe_path = sys.executable
@@ -64,12 +67,13 @@ def set_autostart(enabled: bool) -> bool:
                 winreg.DeleteValue(key, APP_NAME)
                 logger.info("Автозапуск отключён")
             except FileNotFoundError:
-                pass 
+                pass
         winreg.CloseKey(key)
         return True
     except Exception as e:
         logger.exception(f"Ошибка изменения автозапуска: {e}")
         return False
+
 
 def get_autostart() -> bool:
     """Проверяет, включён ли автозапуск. Возвращает True, если запись существует и файл доступен."""
@@ -77,7 +81,8 @@ def get_autostart() -> bool:
         key = winreg.OpenKey(
             winreg.HKEY_CURRENT_USER,
             r"Software\Microsoft\Windows\CurrentVersion\Run",
-            0, winreg.KEY_READ
+            0,
+            winreg.KEY_READ,
         )
         try:
             value, _ = winreg.QueryValueEx(key, APP_NAME)
@@ -91,8 +96,9 @@ def get_autostart() -> bool:
     except Exception as e:
         logger.exception(f"Ошибка проверки автозапуска: {e}")
         return False
-    
-def download_file(url: str, dest: Path, timeout = 60, on_progress=None) -> None:
+
+
+def download_file(url: str, dest: Path, timeout=60, on_progress=None) -> None:
     """Скачивает файл по url"""
     logger.info(f"Загрузка: {url}")
     response = requests.get(url, stream=True, timeout=timeout)
@@ -107,7 +113,16 @@ def download_file(url: str, dest: Path, timeout = 60, on_progress=None) -> None:
             downloaded += len(chunk)
             if total:
                 progerss = downloaded * 100 // total
-                logger.debug(f"Загружено: {progerss}%  ({downloaded // 1024 // 1024} МБ / {total // 1024 // 1024} МБ)")
+                logger.debug(
+                    f"Загружено: {progerss}%  ({downloaded // 1024 // 1024} МБ / {total // 1024 // 1024} МБ)"
+                )
                 if on_progress:
                     on_progress(progerss)
     logger.info(f"Файл сохранён: {dest}")
+
+
+def format_time_millisec(seconds: float) -> str:
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = seconds % 60
+    return f"{hours:02d}:{minutes:02d}:{secs:06.3f}"

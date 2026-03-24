@@ -4,7 +4,7 @@ import uvicorn
 import ctypes
 from tendo import singleton
 
-from thumbnailsManager import clean_thumbnails
+from thumbnailsManager import clean_video_cache
 from webviewManager import run_webview
 from logger import setup_logger
 from settings import settings
@@ -13,8 +13,10 @@ from tray import create_tray
 from utils import get_autostart
 from api import app
 
+
 def start_api():
     uvicorn.run(app, host="127.0.0.1", port=8765, log_level="warning")
+
 
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(2)
@@ -25,7 +27,7 @@ try:
 
     me = singleton.SingleInstance()
 
-    clean_thumbnails()
+    clean_video_cache()
 
     monitor_thread = threading.Thread(target=start_monitor, daemon=True)
     monitor_thread.start()
