@@ -30,9 +30,10 @@ def get_tileset_path(clip_path: Path | str) -> Path:
 
 def generate_tiles(
     clip_path: Path | str,
-    tile_item_width: int = 320,
+    tile_item_width: int = 150,
     tile_x_count: int = 10,
     interval_sec: int = 1,
+    quallity: int = 10,
 ) -> Path | None:
     try:
         clip_path = Path(clip_path)
@@ -43,10 +44,15 @@ def generate_tiles(
             return tileset_path
 
         video_info = get_video_info(clip_path)
+        if not video_info:
+            logger.error(f"Не удалось получить информацию о видео {clip_path.name}")
+            return None
+
         fps = video_info["fps"]
         duration = video_info["duration"]
-        total_frames = int(duration * fps)
+        codec = video_info["codec"]
 
+        total_frames = int(duration * fps)
         if total_frames == 0:
             logger.error(f"Видео {clip_path.name} не содержит кадров")
             return None
@@ -57,17 +63,25 @@ def generate_tiles(
         if selected_frames == 0:
             selected_frames = 1
             frame_interval = total_frames
-
+        # последний ряд может быть неполным
         tile_y_count = (selected_frames + tile_x_count - 1) // tile_x_count
-
         tileset_path.parent.mkdir(parents=True, exist_ok=True)
+
+        input_kwargs = {"threads": 0, "hwaccel": "auto"}
+        # decoder =
+        # if decoder:
+        #     input_kwargs["c:v"] = decoder
+
         ffmpeg_command = (
-            ffmpeg.input(str(Path(clip_path)))
-            .filter("select", f"not(mod(n,{frame_interval}))")
+            ffmpeg.input(str(clip_path), **input_kwargs)
+            .filter("fps", fps=f"1/{interval_sec}")
             .filter("scale", tile_item_width, -1)
             .filter("tile", f"{tile_x_count}x{tile_y_count}")
-            .output(str(tileset_path), vframes=1, fps_mode="vfr")
+            .output(
+                str(tileset_path), vframes=1, **{"q:v": quallity}, pix_fmt="yuv420p"
+            )
         )
+        logger.debug(f"video info: {video_info}")
         if not run_ffmpeg(ffmpeg_command, is_debug=True):
             logger.error(
                 f"Не удалось выполнить команду ffmpeg при генерации тайлсета для видео: {clip_path.name}"
@@ -85,13 +99,8 @@ def generate_tiles(
 
 
 def generate_thumbnail(clip_path: Path, thumbnail_width: int = 450) -> Path:
-    clip_path = Path(clip_path)
-
-    run_kwargs = {"cmd": get_ffmpeg_bin(), "quiet": True}
-    if sys.platform == "win32":
-        run_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
-
     try:
+        clip_path = Path(clip_path)
         thumbnail_path = get_thumbnail_path(clip_path)
         if thumbnail_path.exists():
             logger.debug(f"Обложка для видео {clip_path.stem} уже существует")
@@ -131,10 +140,3 @@ def clean_thumbnails():
         f"Очищен кэш от {len(deleted_set)} удаленных видео, список удаленного: {deleted_set}"
     )
     return deleted_set
-
-
-print(
-    generate_tiles(
-        "C:\\Users\\Egor\\Videos\\Clips\\2025-01\\Операционная система Microsoft® Windows® 23-01-2025 21-47-44.mp4"
-    )
-)

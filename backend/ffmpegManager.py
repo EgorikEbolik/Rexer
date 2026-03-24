@@ -109,7 +109,7 @@ def get_ffmpeg_bin() -> str:
 
 
 def get_ffprobe_bin() -> str:
-    path = get_ffprobe_bin()
+    path = get_ffprobe_path()
 
     if not path:
         logger.info("ffprobe не найден, попытка автозагрузки...")
@@ -181,7 +181,7 @@ def run_ffmpeg(ffmpeg_action, is_debug: bool = False) -> bool:
         return False
 
 
-def get_video_info(video_path: Path | str, is_exact: bool = False) -> list[dict]:
+def get_video_info(video_path: Path | str, is_exact: bool = False) -> dict:
     try:
         video_path = Path(video_path)
         ffprobe_path = get_ffprobe_path()
@@ -191,7 +191,7 @@ def get_video_info(video_path: Path | str, is_exact: bool = False) -> list[dict]
             None,
         )
 
-        video_info: list[dict] = []
+        video_info: dict = {}
         if not video_stream:
             logger.error(f"В файле {video_path.name} не найден видео поток")
             return None
@@ -209,10 +209,10 @@ def get_video_info(video_path: Path | str, is_exact: bool = False) -> list[dict]
         bitrate = int(video_stream["bit_rate"])
         # video_stream["avg_frame_rate"] дает строку вида "120/4" или 24000/1001
         # для получения кадров в секнду делим первое число на второе
-        fps = float(video_stream["avg_frame_rate"].split("/")[0]) / float(
-            video_stream["avg_frame_rate"].split("/")[1]
-        )
-        video_info.append(
+        num, den = video_stream["avg_frame_rate"].split("/")
+        fps = float(num) / float(den)
+
+        video_info.update(
             {
                 "codec": codec,
                 "resolution": resolution,
@@ -227,10 +227,3 @@ def get_video_info(video_path: Path | str, is_exact: bool = False) -> list[dict]
         logger.exception(
             f"При получении информации о видео {video_path} произошла ошибка:\n{e}"
         )
-
-
-print(
-    get_video_info(
-        "C:\\Users\\Egor\\Videos\\Clips\\2025-01\\Операционная система Microsoft® Windows® 23-01-2025 21-47-44.mp4"
-    )
-)
