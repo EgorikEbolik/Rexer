@@ -59,6 +59,7 @@ const PlayerModal: React.FC<{ clip: Clip, api: string, onClose: () => void }> = 
         <MediaPlayer src={streamUrl} autoPlay volume={volume} playsInline>
           <MediaProvider />
           <DefaultVideoLayout icons={defaultLayoutIcons} />
+          {/* <DefaultVideoLayout thumbnails="/thumbnails.vtt" icons={defaultLayoutIcons} /> */}
         </MediaPlayer>
 
         {/* Инфо */}

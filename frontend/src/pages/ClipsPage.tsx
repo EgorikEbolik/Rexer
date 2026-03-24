@@ -25,7 +25,7 @@ const gridComponents: VirtuosoGridProps<undefined, undefined>['components'] = {
     </div>
   )),
   Item: ({ children, ...props }) => (
-    <div{...props}>
+    <div {...props}>
       {children}
     </div>
   ),
@@ -91,7 +91,7 @@ const ClipsPage: React.FC = () => {
 
   return (
 
-    <div className="p-6 flex flex-col h-full">
+    <div className="p-6 flex flex-col h-full pb-0!">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold flex-4">Клипы</h1>
         <div className="flex flex-col items-center">
@@ -108,7 +108,7 @@ const ClipsPage: React.FC = () => {
         className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-1"
         totalCount={clips.length}
         components={gridComponents}
-        increaseViewportBy={{ top: 800, bottom: 600 }}
+        overscan={600}
         itemContent={(index) =>
           <VideoCard
             key={clips[index].path}

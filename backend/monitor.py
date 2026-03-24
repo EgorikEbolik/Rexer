@@ -2,6 +2,7 @@ import watchdog.events
 import watchdog.observers
 import time
 from loguru import logger
+from thumbnailsManager import generate_thumbnail
 from fileProcessor import rename_file
 from windowHandler import get_active_window
 from settings import settings
@@ -18,8 +19,8 @@ class Monitor(watchdog.events.PatternMatchingEventHandler):
       try:
         window = get_active_window()
         logger.info(f"Появился новый файл {event.src_path}")
-        rename_file(event.src_path, window)
-        
+        new_file = rename_file(event.src_path, window)
+        generate_thumbnail(new_file)
       except Exception as e:
         logger.error(f"Ошибка при обработке файла {event.src_path}: {e}")
 

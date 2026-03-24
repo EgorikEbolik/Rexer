@@ -116,6 +116,7 @@ def rename_file(file_path, window):
 
         if settings.data["sound_enabled"]:
             play_sound(settings.data["sound_file"])
+        return new_file
     except FileNotFoundError:
         logger.error(f"Файл не найден: {file_path}")
     except PermissionError:
