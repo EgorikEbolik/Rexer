@@ -106,18 +106,21 @@ def download_file(url: str, dest: Path, timeout=60, on_progress=None) -> None:
 
     total = int(response.headers.get("content-length", 0))
     downloaded = 0
+    last_progress = -1
 
     with open(dest, "wb") as f:
         for chunk in response.iter_content(chunk_size=65536):
             f.write(chunk)
             downloaded += len(chunk)
             if total:
-                progerss = downloaded * 100 // total
-                logger.debug(
-                    f"Загружено: {progerss}%  ({downloaded // 1024 // 1024} МБ / {total // 1024 // 1024} МБ)"
-                )
+                progress = downloaded * 100 // total
+                if progress != last_progress:
+                    logger.debug(
+                        f"Загружено: {progress}%  ({downloaded // 1024 // 1024} МБ / {total // 1024 // 1024} МБ)"
+                    )
+                    last_progress = progress
                 if on_progress:
-                    on_progress(progerss)
+                    on_progress(progress)
     logger.info(f"Файл сохранён: {dest}")
 
 

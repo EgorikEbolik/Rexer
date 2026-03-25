@@ -1,3 +1,4 @@
+import json
 import subprocess
 import sys
 import shutil
@@ -50,10 +51,10 @@ def ensure_ffmpeg(broadcast_fn=None) -> bool:
                 {"type": "ffmpeg_progress", "stage": "downloading", "percent": pct}
             )
 
-    if get_ffmpeg_path():
+    if get_ffmpeg_path() and get_ffprobe_path():
         return True
 
-    logger.info("ffmpeg не найден, начинаем загрузку")
+    logger.info("ffmpeg или ffprobe не найден, начинаем загрузку")
 
     bin_dir = get_bin_dir()
     bin_dir.mkdir(parents=True, exist_ok=True)
@@ -91,21 +92,21 @@ def get_ffmpeg_bin() -> str:
     При отсутствии - пытается скачать автоматически
     Выбрасывает RuntimeError, если ffmpeg недоступен
     """
-    path = get_ffmpeg_path()
+    ffmpeg_path = get_ffmpeg_path()
 
-    if not path:
+    if not ffmpeg_path:
         logger.info("ffmpeg не найден, попытка автозагрузки...")
         if ensure_ffmpeg():
-            path = get_ffmpeg_path()
+            ffmpeg_path = get_ffmpeg_path()
 
-    if not path:
+    if not ffmpeg_path:
         logger.error("ffmpeg недоступен после попытки загрузки")
         raise RuntimeError(
             f"ffmpeg не найден. Скачайте его по ссылке '{FFMPEG_URL}' "
             f"и поместите '{FFMPEG_EXE}' в папку 'bin' рядом с приложением."
         )
 
-    return str(path)
+    return str(ffmpeg_path)
 
 
 def get_ffprobe_bin() -> str:
@@ -181,11 +182,37 @@ def run_ffmpeg(ffmpeg_action, is_debug: bool = False) -> bool:
         return False
 
 
+# запуск ffprobe без окна, так же как run_ffmpeg, но еще принимает любые кварги и подставляет их в команду
+def run_ffprobe(file: str | Path, cmd=get_ffprobe_bin(), **kwargs):
+    args = [cmd, "-show_format", "-show_streams", "-of", "json"]
+    file = str(Path(file))
+
+    for key, value in kwargs.items():
+        args.extend([f"-{key}", str(value)])
+
+    args.append(file)
+
+    if sys.platform == "win32":
+        process = subprocess.run(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
+    else:
+        process = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    if process.returncode != 0:
+        logger.error(f"ffmpeg ошибка: {process.stderr.decode('utf-8')}")
+        return {}
+
+    return json.loads(process.stdout.decode("utf-8"))
+
+
 def get_video_info(video_path: Path | str, is_exact: bool = False) -> dict:
     try:
         video_path = Path(video_path)
-        ffprobe_path = get_ffprobe_path()
-        probe = ffmpeg.probe(video_path, cmd=str(ffprobe_path))
+        probe = run_ffprobe(video_path)
         video_stream = next(
             (stream for stream in probe["streams"] if stream["codec_type"] == "video"),
             None,
