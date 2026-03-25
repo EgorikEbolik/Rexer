@@ -22,34 +22,11 @@ from ffmpegManager import ensure_ffmpeg
 from utils import VIDEO_EXTENSIONS
 from paths import get_static_dir
 from settings import settings, Settings
+from state import manager
+from monitor import video_monitor
+
 
 EXTENSIONS = [extension.replace("*", "") for extension in VIDEO_EXTENSIONS]
-
-
-class ConnectionManager:
-    def __init__(self):
-        self.active: List[WebSocket] = []
-        self.loop = None
-
-    def set_loop(self, loop):
-        self.loop = loop
-        logger.debug(f"loop установлен в менеджере: {loop}")
-
-    async def connect(self, ws: WebSocket):
-        await ws.accept()
-        self.active.append(ws)
-        logger.debug(f"WebSocket подключен: {ws.client}")
-
-    def disconnect(self, ws: WebSocket):
-        self.active.remove(ws)
-        logger.debug("WebSocket отключен")
-
-    async def broadcast(self, data: dict):
-        for ws in self.active:
-            await ws.send_json(data)
-
-
-manager = ConnectionManager()
 
 
 async def _set_loop():
@@ -197,8 +174,15 @@ def get_tileset_vtt(path: str):
 
 @app.post("/settings")
 def update_settings(new_settings: dict[str, Any]):
-    settings.data.update(new_settings)
+    old_settings = settings.data
+    diff = dict(set(new_settings.items()) - set(old_settings.items()))
+
+    settings.data.update(diff)
     settings.save()
+    if "watch_folder" in diff:
+        logger.debug(diff["watch_folder"])
+        video_monitor.update_args(folder_to_watch=diff["watch_folder"])
+        logger.debug(video_monitor.folder_to_watch)
     return {"ok": True}
 
 

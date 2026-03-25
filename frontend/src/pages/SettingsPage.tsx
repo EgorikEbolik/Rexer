@@ -277,21 +277,36 @@ const SettingsPage: React.FC = () => {
               </p>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label>Громкость по умолчанию</Label>
+                  <Label>Громкость уведомления</Label>
                   <span className="text-sm text-muted-foreground">
-                    {Math.round(settings.sound_volume * 100)}%
+                    {Math.round(settings.notification_volume * 100)}%
                   </span>
                 </div>
                 <Slider
                   min={0}
                   max={1}
                   step={0.01}
-                  value={[settings.sound_volume]}
-                  onValueChange={([v]) => update("sound_volume", v)}
+                  value={[settings.notification_volume]}
+                  onValueChange={([v]) => update("notification_volume", v)}
                 />
               </div>
             </>
           )}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Громкость видео по умолчанию</Label>
+              <span className="text-sm text-muted-foreground">
+                {Math.round(settings.player_default_volume * 100)}%
+              </span>
+            </div>
+            <Slider
+              min={0}
+              max={1}
+              step={0.01}
+              value={[settings.player_default_volume]}
+              onValueChange={([v]) => update("player_default_volume", v)}
+            />
+          </div>
         </CardContent>
       </Card>
 

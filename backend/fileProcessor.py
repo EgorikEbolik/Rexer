@@ -8,11 +8,12 @@ import asyncio
 from tray import update_last_clip
 from utils import play_sound
 from settings import settings
-from api import manager
+from state import manager
 
 MAX_WAIT_TIME = 30
 STABLE_COUNT_REQUIRED = 3
 CHECK_INTERVAL = 0.5
+
 
 def notify_new_clip(clip_data: dict):
     """Отправляет уведомление о новом клипе через WebSocket."""
@@ -22,14 +23,18 @@ def notify_new_clip(clip_data: dict):
         return
     try:
         asyncio.run_coroutine_threadsafe(
-            manager.broadcast({"type": "new_clip", "clip": clip_data}),
-            manager.loop
+            manager.broadcast({"type": "new_clip", "clip": clip_data}), manager.loop
         )
-        logger.debug(f"notify_new_clip вызван, active={len(manager.active)}, loop={manager.loop}")
+        logger.debug(
+            f"notify_new_clip вызван, active={len(manager.active)}, loop={manager.loop}"
+        )
     except RuntimeError as e:
-        logger.error(f"Не удалось отправить уведомление: {e} (возможно, цикл событий закрыт)")
+        logger.error(
+            f"Не удалось отправить уведомление: {e} (возможно, цикл событий закрыт)"
+        )
     except Exception as e:
         logger.exception(f"Неизвестная ошибка при отправке уведомления: {e}")
+
 
 def apply_template(window: str, dt: datetime, template: str = None) -> str:
     """Применяет шаблон, заменяя токены на значения. При ошибке возвращает шаблон как есть."""
@@ -52,6 +57,7 @@ def apply_template(window: str, dt: datetime, template: str = None) -> str:
     except Exception as e:
         logger.warning(f"Ошибка при применении шаблона: {e}")
         return template
+
 
 def wait_until_available(file_path: str | Path, timeout: int = MAX_WAIT_TIME) -> bool:
     """Ожидает, пока файл перестанет изменяться, не дольше timeout секунд. Возвращает True, если готов."""
@@ -85,6 +91,7 @@ def wait_until_available(file_path: str | Path, timeout: int = MAX_WAIT_TIME) ->
     logger.debug(f"Файл доступен: {file_path}")
     return True
 
+
 def rename_file(file_path, window):
     """Переименовывает файл по шаблону и перемещает его."""
     try:
@@ -105,14 +112,16 @@ def rename_file(file_path, window):
             logger.error("Не удалось переместить файл")
             return
 
-        notify_new_clip({
-            "name": new_file.stem,
-            "filename": new_file.name,
-            "path": str(new_file),
-            "size_mb": round(new_file.stat().st_size / (1024 * 1024), 2),
-            "created_at": new_file.stat().st_mtime,
-            "game": window if settings.data["sort_mode"] == "game" else None
-        })
+        notify_new_clip(
+            {
+                "name": new_file.stem,
+                "filename": new_file.name,
+                "path": str(new_file),
+                "size_mb": round(new_file.stat().st_size / (1024 * 1024), 2),
+                "created_at": new_file.stat().st_mtime,
+                "game": window if settings.data["sort_mode"] == "game" else None,
+            }
+        )
 
         if settings.data["sound_enabled"]:
             play_sound(settings.data["sound_file"])
@@ -123,6 +132,7 @@ def rename_file(file_path, window):
         logger.error(f"Нет доступа к файлу: {file_path}")
     except Exception as e:
         logger.exception(f"Неизвестная ошибка при обработке {file_path}: {e}")
+
 
 def move_file(source_file_path, window):
     """Перемещает файл в папку назначения с учётом сортировки. Возвращает Path нового файла или None."""

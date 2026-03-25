@@ -35,7 +35,7 @@ def play_sound(sound_file: str | Path, volume: float = None) -> bool:
             logger.error(f"Звуковой файл не найден: {sound_file}")
             return False
         if volume is None:
-            volume = settings.data.get("sound_volume", 0.5)
+            volume = settings.data.get("notification_volume", 0.5)
         volume = max(0.0, min(1.0, volume))
         data, samplerate = sf.read(str(sound_path))
         sd.play(data * volume, samplerate)

@@ -14,7 +14,7 @@ const PlayerModal: React.FC<{ clip: Clip, api: string, onClose: () => void }> = 
 
   const streamUrl = `${api}/clips/stream?path=${encodeURIComponent(clip.path)}`;
   const vttUrl = `${api}/clips/tileset/vtt?path=${encodeURIComponent(clip.path)}`;
-  const volume = settings?.sound_volume ?? 0.35;
+  const volume = settings?.player_default_volume ?? 0.35;
   const formatDate = (ts: number) =>
     new Date(ts * 1000).toLocaleString("ru-RU", {
       day: "2-digit",

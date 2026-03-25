@@ -9,7 +9,8 @@ export interface Settings {
   sort_date_format: string;
   sound_enabled: boolean;
   sound_file: string;
-  sound_volume: number;
+  notification_volume: number;
+  player_default_volume: number;
   filename_template: string;
   autostart: boolean;
   hover_playback: boolean;

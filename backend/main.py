@@ -1,17 +1,18 @@
-from loguru import logger
 import threading
-import uvicorn
 import ctypes
+
+from loguru import logger
+import uvicorn
 from tendo import singleton
 
 from thumbnailsManager import clean_video_cache
 from webviewManager import run_webview
 from logger import setup_logger
 from settings import settings
-from monitor import start_monitor
 from tray import create_tray
 from utils import get_autostart
 from api import app
+from monitor import video_monitor
 
 
 def start_api():
@@ -28,8 +29,7 @@ try:
     me = singleton.SingleInstance()
 
     clean_video_cache()
-
-    monitor_thread = threading.Thread(target=start_monitor, daemon=True)
+    monitor_thread = threading.Thread(target=video_monitor.start_monitor, daemon=True)
     monitor_thread.start()
     api_thread = threading.Thread(target=start_api, daemon=True)
     api_thread.start()

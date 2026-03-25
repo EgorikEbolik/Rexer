@@ -227,3 +227,4 @@ def get_video_info(video_path: Path | str, is_exact: bool = False) -> dict:
         logger.exception(
             f"При получении информации о видео {video_path} произошла ошибка:\n{e}"
         )
+        return None

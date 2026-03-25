@@ -86,7 +86,7 @@ def generate_tileset(
             .output(str(tileset_path), vframes=1, **{"q:v": quallity})
         )
         logger.debug(f"video info: {video_info}")
-        if not run_ffmpeg(ffmpeg_command, is_debug=True):
+        if not run_ffmpeg(ffmpeg_command):
             logger.error(
                 f"Не удалось выполнить команду ffmpeg при генерации тайлсета для видео: {clip_path.name}"
             )
@@ -109,6 +109,7 @@ def generate_tileset(
         logger.exception(
             f"Ошибка при создании тайлсета для видео {clip_path.name}, {e}"
         )
+        return None
 
 
 def generate_vtt_for_tileset(
