@@ -1,9 +1,6 @@
-import subprocess
-import sys
-
 from utils import VIDEO_EXTENSIONS, format_time_millisec
 from paths import get_cache_dir
-from ffmpegManager import get_ffmpeg_bin, get_video_info, run_ffmpeg
+from ffmpegManager import get_video_info, run_ffmpeg
 from settings import settings
 
 from hashlib import md5
@@ -39,9 +36,10 @@ def generate_tileset(
     tile_item_width: int = 150,
     tile_x_count: int = 10,
     interval_sec: int = 1,
-    quallity: int = 10,
+    quallity: int = None,
 ) -> Path | None:
     try:
+
         clip_path = Path(clip_path)
         tileset_path = get_tileset_path(clip_path)
 
@@ -53,6 +51,8 @@ def generate_tileset(
         if not video_info:
             logger.error(f"Не удалось получить информацию о видео {clip_path.name}")
             return None
+        if quallity is None:
+            quallity = settings.data["tileset_quallity"]
 
         fps = video_info["fps"]
         duration = video_info["duration"]

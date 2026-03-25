@@ -14,6 +14,7 @@ export interface Settings {
   filename_template: string;
   autostart: boolean;
   hover_playback: boolean;
+  tileset_quallity: number;
 }
 
 let cachedSettings: Settings | null = null;

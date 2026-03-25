@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Folder, Volume2, FileVideo, SortAsc, Play, Save, RotateCcw } from "lucide-react";
+import { Folder, Volume2, FileVideo, SortAsc, Play, Save, RotateCcw, BrainCircuit } from "lucide-react";
 import { type Settings } from "@/hooks/useSettings"
 import { useSettings } from "@/hooks/useSettings";
 import PathInput from "@/components/PathInput";
@@ -118,6 +118,9 @@ const SettingsPage: React.FC = () => {
             mode="folder"
             placeholder="C:/Videos/Clips"
           />
+          <p className="text-xs text-muted-foreground mt-2!">
+            Подсказка: если хотите хранить клипы в одной папке без перемещения - укажите одинаковые папки OBS и назначения, и выберите режим сортировки "Без сортировки".
+          </p>
         </CardContent>
       </Card>
 
@@ -273,7 +276,7 @@ const SettingsPage: React.FC = () => {
                 placeholder="C:/sounds/done.wav"
               />
               <p className="text-xs text-muted-foreground mt-2!">
-                Поддеживаемые форматы: .flac, .wav, .ogg
+                Поддерживаемые форматы: .flac, .wav, .ogg
               </p>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -294,7 +297,7 @@ const SettingsPage: React.FC = () => {
           )}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Громкость видео по умолчанию</Label>
+              <Label>Громкость воспроизведения видео по умолчанию</Label>
               <span className="text-sm text-muted-foreground">
                 {Math.round(settings.player_default_volume * 100)}%
               </span>
@@ -342,6 +345,43 @@ const SettingsPage: React.FC = () => {
               checked={settings.hover_playback}
               onCheckedChange={(v) => update("hover_playback", v)}
             />
+          </div>
+        </CardContent>
+      </Card>
+      {/* Расширенные настройки */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <BrainCircuit className="h-4 w-4" />
+            Расширенные настройки
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col justify-between gap-5">
+            <div className="text-left">
+              <Label>Качество кэша картинок на таймлайне</Label>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                <p>Определяет качество картинок, которые вы видите при наведении на таймлайн при просмотре видео. Чем больше число - тем хуже качество. Значение по умолчанию - 10, этого достаточно для большинства случаев. Полезно повысить и пересоздать кэш, если у вас много клипов и жалко места.
+                  <br /><br />1 - лучшее качество, наибольший размер
+                  <br />31 - худшее качество, маленький размер
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Slider
+                min={1}
+                max={31}
+                step={1}
+                value={[settings.tileset_quallity]}
+                onValueChange={([v]) => update("tileset_quallity", v)}
+              />
+              <span className="text-sm text-muted-foreground ml-auto">
+                {settings.tileset_quallity}
+              </span>
+              <Button variant="ghost" size="icon" onClick={() => update("tileset_quallity", defaults?.tileset_quallity ?? "")}>
+                <RotateCcw className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

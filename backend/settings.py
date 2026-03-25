@@ -19,6 +19,7 @@ class Settings:
         "sort_mode": "date",  # "game", "date", "none"
         "autostart": False,
         "hover_playback": True,
+        "tileset_quallity": 10,  # 1-лучшее, 31 - худшее
     }
 
     def __init__(self) -> None:
