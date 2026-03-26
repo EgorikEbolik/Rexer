@@ -7,7 +7,7 @@ import os
 
 from settings import settings
 from webviewManager import show_window, close_window
-from paths import get_resources_folder, get_bundled_resources_folder
+from paths import get_bundled_resources_folder
 
 last_clip = ""
 last_clip_path = ""
@@ -17,12 +17,15 @@ tray_icon = None
 def open_ui():
     show_window()
 
+
 def open_clips_folder():
-  folder = settings.data["dest_folder"]
-  subprocess.Popen(["explorer", folder])
+    folder = settings.data["dest_folder"]
+    subprocess.Popen(["explorer", folder])
+
 
 def open_last_clip():
-  os.startfile(last_clip_path)
+    os.startfile(last_clip_path)
+
 
 def update_last_clip(clip_name: str, clip_path):
     global last_clip, last_clip_path, tray_icon
@@ -32,6 +35,7 @@ def update_last_clip(clip_name: str, clip_path):
         tray_icon.menu = build_menu()
         tray_icon.update_menu()
 
+
 def build_menu():
     return pystray.Menu(
         pystray.MenuItem("Открыть", open_ui, default=True),
@@ -40,6 +44,7 @@ def build_menu():
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("Выход", on_exit),
     )
+
 
 def on_exit(icon):
     close_window()

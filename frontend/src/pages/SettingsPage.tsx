@@ -372,13 +372,13 @@ const SettingsPage: React.FC = () => {
                 min={1}
                 max={31}
                 step={1}
-                value={[settings.tileset_quallity]}
-                onValueChange={([v]) => update("tileset_quallity", v)}
+                value={[settings.tileset_quality]}
+                onValueChange={([v]) => update("tileset_quality", v)}
               />
               <span className="text-sm text-muted-foreground ml-auto">
-                {settings.tileset_quallity}
+                {settings.tileset_quality}
               </span>
-              <Button variant="ghost" size="icon" onClick={() => update("tileset_quallity", defaults?.tileset_quallity ?? "")}>
+              <Button variant="ghost" size="icon" onClick={() => update("tileset_quality", defaults?.tileset_quality ?? "")}>
                 <RotateCcw className="h-3 w-3" />
               </Button>
             </div>

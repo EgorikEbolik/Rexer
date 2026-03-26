@@ -23,12 +23,12 @@ def get_thumbnail_path(clip_path: Path | str) -> Path:
 
 def get_tileset_path(clip_path: Path | str) -> Path:
     hash = create_hash(Path(clip_path))
-    return get_cache_dir() / hash / "tilest.jpg"
+    return get_cache_dir() / hash / "tileset.jpg"
 
 
 def get_vtt_path(clip_path: Path | str) -> Path:
     hash = create_hash(Path(clip_path))
-    return get_cache_dir() / hash / "tilest.vtt"
+    return get_cache_dir() / hash / "tileset.vtt"
 
 
 def generate_tileset(
@@ -36,7 +36,7 @@ def generate_tileset(
     tile_item_width: int = 150,
     tile_x_count: int = 10,
     interval_sec: int = 1,
-    quallity: int = None,
+    quality: int = None,
 ) -> Path | None:
     try:
 
@@ -51,8 +51,8 @@ def generate_tileset(
         if not video_info:
             logger.error(f"Не удалось получить информацию о видео {clip_path.name}")
             return None
-        if quallity is None:
-            quallity = settings.data["tileset_quallity"]
+        if quality is None:
+            quality = settings.data["tileset_quality"]
 
         fps = video_info["fps"]
         duration = video_info["duration"]
@@ -83,7 +83,7 @@ def generate_tileset(
             .filter("fps", fps=f"1/{interval_sec}")
             .filter("scale", tile_item_width, -1)
             .filter("tile", f"{tile_x_count}x{tile_y_count}")
-            .output(str(tileset_path), vframes=1, **{"q:v": quallity})
+            .output(str(tileset_path), vframes=1, **{"q:v": quality})
         )
         logger.debug(f"video info: {video_info}")
         if not run_ffmpeg(ffmpeg_command):
