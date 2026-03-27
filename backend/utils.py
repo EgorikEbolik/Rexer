@@ -124,6 +124,7 @@ def download_file(url: str, dest: Path, timeout=60, on_progress=None) -> None:
     logger.info(f"Файл сохранён: {dest}")
 
 
+# возвращает время в формате HH.MM.SS.mmm (00:00:05.000)
 def format_time_millisec(seconds: float) -> str:
     hours = int(seconds // 3600)
     minutes = int((seconds % 3600) // 60)

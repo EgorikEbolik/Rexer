@@ -2,12 +2,11 @@ import threading
 
 import watchdog.events
 import watchdog.observers
-import time
 from loguru import logger
-from thumbnailsManager import generate_thumbnail, generate_tileset
-from fileProcessor import rename_file
-from windowHandler import get_active_window
 
+from thumbnailsManager import generate_thumbnail, generate_tileset
+from windowHandler import get_active_window
+from fileProcessor import process_clip
 from settings import settings
 from utils import VIDEO_EXTENSIONS, create_folder
 
@@ -35,7 +34,7 @@ class FileMonitor(watchdog.events.PatternMatchingEventHandler):
         try:
             window = get_active_window()
             logger.info(f"Появился новый файл {event.src_path}")
-            new_file = rename_file(event.src_path, window)
+            new_file = process_clip(event.src_path, window)
             if new_file:
                 generate_thumbnail(new_file)
                 threading.Thread(

@@ -92,8 +92,10 @@ def wait_until_available(file_path: str | Path, timeout: int = MAX_WAIT_TIME) ->
     return True
 
 
-def rename_file(file_path, window):
-    """Переименовывает файл по шаблону и перемещает его."""
+def rename_template(
+    file_path: Path | str, window: str, rewrite: bool = False
+) -> Path | None:
+    """Переименовывает файл по шаблону"""
     try:
         dt = datetime.fromtimestamp(Path(file_path).stat().st_mtime)
         if not wait_until_available(file_path):
@@ -102,39 +104,66 @@ def rename_file(file_path, window):
         file = Path(file_path)
         new_name = f"{apply_template(window, dt)}{file.suffix}"
         renamed = file.with_name(new_name)
-        if renamed.exists():
-            logger.warning(f"Файл {new_name} уже существует, будет перезаписан")
+        renamed = get_available_filename(renamed, rewrite)
         file.replace(renamed)
-        logger.info(f"Переименован: {file.name} -> {new_name}")
-
-        new_file = move_file(renamed, window)
-        if new_file is None:
-            logger.error("Не удалось переместить файл")
-            return
-
-        notify_new_clip(
-            {
-                "name": new_file.stem,
-                "filename": new_file.name,
-                "path": str(new_file),
-                "size_mb": round(new_file.stat().st_size / (1024 * 1024), 2),
-                "created_at": new_file.stat().st_mtime,
-                "game": window if settings.data["sort_mode"] == "game" else None,
-            }
-        )
-
-        if settings.data["sound_enabled"]:
-            play_sound(settings.data["sound_file"])
-        return new_file
+        logger.info(f"Переименован: {file.name} -> {renamed.name}")
+        return renamed
     except FileNotFoundError:
         logger.error(f"Файл не найден: {file_path}")
+        return None
     except PermissionError:
         logger.error(f"Нет доступа к файлу: {file_path}")
+        return None
     except Exception as e:
         logger.exception(f"Неизвестная ошибка при обработке {file_path}: {e}")
+        return None
 
 
-def move_file(source_file_path, window):
+# переименование файла
+def rename_simple(
+    file_path: Path | str, new_name: str, rewrite: bool = False
+) -> Path | None:
+    try:
+        if not wait_until_available(file_path):
+            logger.warning(f"Файл не готов, но пробуем обработать: {file_path}")
+
+        file = Path(file_path)
+
+        renamed = file.with_stem(new_name)
+        renamed = get_available_filename(renamed, rewrite)
+        file.replace(renamed)
+        logger.info(f"Переименован: {file} ---> {renamed}")
+        return renamed
+    except FileNotFoundError:
+        logger.error(f"Файл не найден: {file_path}")
+        return None
+    except PermissionError:
+        logger.error(f"Нет доступа к файлу: {file_path}")
+        return None
+    except Exception as e:
+        logger.exception(f"Неизвестная ошибка при обработке {file_path}: {e}")
+        return None
+
+
+def get_available_filename(path: Path | str, rewrite: bool = False) -> Path:
+    path = Path(path)
+    if not path.exists() or rewrite:
+        return path
+
+    parent = path.parent
+    stem = path.stem
+    suffix = path.suffix
+    counter = 1
+    new_path = path
+    while new_path.exists():
+        new_path = parent / f"{stem} ({counter}){suffix}"
+        counter += 1
+    logger.debug(f"Конфликт имён: {path.name} -> {new_path.name}")
+
+    return new_path
+
+
+def move_to_dest_folder(source_file_path, window, rewrite: bool = False):
     """Перемещает файл в папку назначения с учётом сортировки. Возвращает Path нового файла или None."""
     file_path = Path(source_file_path)
     if not file_path.exists():
@@ -161,8 +190,7 @@ def move_file(source_file_path, window):
         return None
 
     new_file = destination / file_name
-    if new_file.exists():
-        logger.warning(f"Файл {new_file} уже существует, будет перезаписан")
+    new_file = get_available_filename(new_file, rewrite)
 
     try:
         shutil.move(str(file_path), str(new_file))
@@ -172,4 +200,27 @@ def move_file(source_file_path, window):
         return None
 
     update_last_clip(new_file.name, new_file)
+    return new_file
+
+
+def process_clip(file_path: Path | str, window: str) -> Path | None:
+    renamed_file = rename_template(file_path, window)
+    new_file = move_to_dest_folder(renamed_file, window)
+
+    if new_file is None:
+        logger.error("Не удалось переместить файл")
+        return None
+
+    notify_new_clip(
+        {
+            "name": new_file.stem,
+            "filename": new_file.name,
+            "path": str(new_file),
+            "size_mb": round(new_file.stat().st_size / (1024 * 1024), 2),
+            "created_at": new_file.stat().st_mtime,
+            "game": window if settings.data["sort_mode"] == "game" else None,
+        }
+    )
+    if settings.data["sound_enabled"]:
+        play_sound(settings.data["sound_file"])
     return new_file
