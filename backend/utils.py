@@ -124,9 +124,22 @@ def download_file(url: str, dest: Path, timeout=60, on_progress=None) -> None:
     logger.info(f"Файл сохранён: {dest}")
 
 
-# возвращает время в формате HH.MM.SS.mmm (00:00:05.000)
+# возвращает время в формате HH.MM.SS.mmm (00:00:05.000) (часы:минуты:секунды.миллисекунды)
 def format_time_millisec(seconds: float) -> str:
     hours = int(seconds // 3600)
     minutes = int((seconds % 3600) // 60)
     secs = seconds % 60
     return f"{hours:02d}:{minutes:02d}:{secs:06.3f}"
+
+
+def delete_file(path: Path | str) -> bool:
+    try:
+        path = Path(path)
+        if not path.exists():
+            logger.error(f"Не удалось удалить файл, так как он не сущетсвует {path}")
+            return False
+        path.unlink()
+        return True
+    except Exception as e:
+        logger.exception(f"Неизвестная ошибка при удалении: {e}")
+        return False

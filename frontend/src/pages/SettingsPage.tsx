@@ -195,6 +195,18 @@ const SettingsPage: React.FC = () => {
           <CardDescription>Как называть сохранённые клипы</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Перезаписывать файлы с одинаковым именем</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Если выключено - к имени добавится порядковый номер
+              </p>
+            </div>
+            <Switch
+              checked={settings.rewrite_files}
+              onCheckedChange={(v) => update("rewrite_files", v)}
+            />
+          </div>
           <div className="space-y-1.5">
             <Label>Шаблон</Label>
             <div className="flex gap-2">

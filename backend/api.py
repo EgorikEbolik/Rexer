@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 import sys
 import threading
-from typing import Any, List
+from typing import Any
 from loguru import logger
 import win32gui
 from win32com.shell import shell, shellcon
@@ -12,14 +12,17 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from fileProcessor import rename_simple
 from thumbnailsManager import (
+    delete_video_cache,
     generate_thumbnail,
     generate_tileset,
     get_tileset_path,
     get_vtt_path,
+    rename_video_cache,
 )
 from ffmpegManager import ensure_ffmpeg
-from utils import VIDEO_EXTENSIONS
+from utils import VIDEO_EXTENSIONS, delete_file
 from paths import get_static_dir
 from settings import settings, Settings
 from state import manager
@@ -184,6 +187,24 @@ def update_settings(new_settings: dict[str, Any]):
         video_monitor.update_args(folder_to_watch=diff["watch_folder"])
         logger.debug(video_monitor.folder_to_watch)
     return {"ok": True}
+
+
+@app.delete("/clips")
+def delete_clip(path: str):
+    success = delete_file(path)
+    if not success:
+        return {"error": "Не удалось удалить файл"}
+    delete_video_cache(path)
+    return {"ok": True}
+
+
+@app.patch("/clips/rename")
+def rename_clip(path: str, name: str):
+    new_path = rename_simple(path, name)
+    if new_path is None:
+        return {"error": "Не удалось переименовать файл"}
+    rename_video_cache(path, new_path)
+    return {"ok": True, "path": str(new_path)}
 
 
 @app.websocket("/ws")

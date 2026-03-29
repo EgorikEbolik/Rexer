@@ -1,130 +1,230 @@
-import { Calendar, HardDrive, Play } from "lucide-react";
+import {
+    Calendar,
+    HardDrive,
+    Play,
+    MoreVertical,
+    Trash2,
+    Edit3,
+} from "lucide-react";
 import React from "react";
-// import { Badge } from "../ui/badge";
-
+import Dropdown, { type DropdownItemInterface } from "../dropdown";
+import Dialog from "../AlertDialog";
+import { Input } from "../ui/input";
 
 export interface Clip {
-  name: string;
-  filename: string;
-  path: string;
-  size_mb: number;
-  created_at: number;
-  game: string | null;
+    name: string;
+    filename: string;
+    path: string;
+    size_mb: number;
+    created_at: number;
+    game: string | null;
 }
 
-const VideoCard: React.FC<{ clip: Clip; api: string; hoverPlaybackEnabled: boolean; onClick: () => void }> = ({ clip, api, hoverPlaybackEnabled, onClick }) => {
-  const [shouldPlay, setShouldPlay] = React.useState(false);
-  const videoRef = React.useRef<HTMLVideoElement>(null);
-  const hoverTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+const VideoCard: React.FC<{
+    clip: Clip;
+    api: string;
+    hoverPlaybackEnabled: boolean;
+    onClick: () => void;
+    onDelete: () => void;
+    onRename: (newPath: string, newName: string) => void;
+}> = ({ clip, api, hoverPlaybackEnabled, onClick, onDelete, onRename }) => {
+    const [shouldPlay, setShouldPlay] = React.useState(false);
 
-  React.useEffect(() => {
-    return () => {
-      if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    const [editing, setEditing] = React.useState<boolean>(false);
+    const [newName, setNewName] = React.useState<string>(clip.name);
+    const [streamUrl, setStreamUrl] = React.useState<string>(
+        `${api}/clips/stream?path=${encodeURIComponent(clip.path)}`,
+    );
+    const [thumbnailUrl, setThumbnailUrl] = React.useState<string>(
+        `${api}/clips/thumbnail?path=${encodeURIComponent(clip.path)}`,
+    );
+
+    const videoRef = React.useRef<HTMLVideoElement>(null);
+    const hoverTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const handleRename = async () => {
+        const res = await fetch(
+            `${api}/clips/rename?path=${encodeURIComponent(clip.path)}&name=${encodeURIComponent(newName)}`,
+            { method: "PATCH" },
+        );
+        if (res.ok) {
+            const data = await res.json();
+            setStreamUrl(
+                `${api}/clips/stream?path=${encodeURIComponent(data.path)}`,
+            );
+            setThumbnailUrl(
+                `${api}/clips/thumbnail?path=${encodeURIComponent(data.path)}`,
+            );
+            onRename(data.path, newName);
+            setEditing(false);
+        } else {
+            setNewName(clip.name);
+            setEditing(false);
+        }
     };
-  }, []);
+    const dropdownItems: DropdownItemInterface[] = [
+        {
+            label: "Переименовать",
+            onClick: () => setEditing(true),
+            isCritical: false,
+            icon: <Edit3 />,
+        },
+        {
+            label: "Удалить",
+            onClick: async () => {
+                const res = await fetch(
+                    `${api}/clips?path=${encodeURIComponent(clip.path)}`,
+                    { method: "DELETE" },
+                );
+                if (res.ok) onDelete();
+            },
+            isCritical: true,
+            icon: <Trash2 />,
+        },
+    ];
 
-  React.useEffect(() => {
-    setShouldPlay(false);
-    if (hoverTimer.current) {
-      clearTimeout(hoverTimer.current);
-      hoverTimer.current = null;
-    }
-  }, [clip]);
+    React.useEffect(() => {
+        return () => {
+            if (hoverTimer.current) clearTimeout(hoverTimer.current);
+        };
+    }, []);
 
-  React.useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    React.useEffect(() => {
+        setShouldPlay(false);
+        if (hoverTimer.current) {
+            clearTimeout(hoverTimer.current);
+            hoverTimer.current = null;
+        }
+    }, [clip]);
 
-    if (shouldPlay) {
-      video.play().catch(err => console.debug("Playback prevented:", err));
-    } else {
-      video.pause();
-      video.currentTime = 0;
-    }
-  }, [shouldPlay]);
+    React.useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
 
-  const handleMouseEnter = () => {
-    if (!hoverPlaybackEnabled || shouldPlay) return;
-    hoverTimer.current = setTimeout(() => {
-      setShouldPlay(true);
-    }, 800);
-  };
+        if (shouldPlay) {
+            video
+                .play()
+                .catch((err) => console.debug("Playback prevented:", err));
+        } else {
+            video.pause();
+            video.currentTime = 0;
+        }
+    }, [shouldPlay]);
 
-  const handleMouseLeave = () => {
-    if (hoverTimer.current) {
-      clearTimeout(hoverTimer.current);
-      hoverTimer.current = null;
-    }
-    setShouldPlay(false);
-  };
+    const handleMouseEnter = () => {
+        if (!hoverPlaybackEnabled || shouldPlay) return;
+        hoverTimer.current = setTimeout(() => {
+            setShouldPlay(true);
+        }, 800);
+    };
 
-  const formatDate = (ts: number) =>
-    new Date(ts * 1000).toLocaleString("ru-RU", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const handleMouseLeave = () => {
+        if (hoverTimer.current) {
+            clearTimeout(hoverTimer.current);
+            hoverTimer.current = null;
+        }
+        setShouldPlay(false);
+    };
 
-  const formatSize = (mb: number) =>
-    mb >= 1024 ? `${(mb / 1024).toFixed(1)} ГБ` : `${mb} МБ`;
+    const formatDate = (ts: number) =>
+        new Date(ts * 1000).toLocaleString("ru-RU", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
 
-  const thumbnailUrl = `${api}/clips/thumbnail?path=${encodeURIComponent(clip.path)}`;
+    const formatSize = (mb: number) =>
+        mb >= 1024 ? `${(mb / 1024).toFixed(1)} ГБ` : `${mb} МБ`;
 
-  return (
-    <div
-      className="group relative rounded-lg bg-card border border-border cursor-pointer hover:border-primary/50 transition-all duration-200 hover:shadow-lg hover:shadow-black/20"
-      onClick={onClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <div className="relative aspect-video bg-muted">
-        {hoverPlaybackEnabled ? (
-          <video
-            ref={videoRef}
-            poster={thumbnailUrl}
-            src={shouldPlay ? `${api}/clips/stream?path=${encodeURIComponent(clip.path)}` : undefined}
-            className="w-full h-full object-cover"
-            muted
-            loop
-            onError={(e) => { (e.target as HTMLVideoElement).style.display = "none"; }}
-          />
-        ) : (
-          <img
-            src={thumbnailUrl}
-            alt={clip.name}
-            className="w-full h-full object-cover"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-          />
-        )}
-        {!hoverPlaybackEnabled && (
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-              <Play className="h-6 w-6 text-white fill-white" />
+    // const thumbnailUrl = `${api}/clips/thumbnail?path=${encodeURIComponent(clip.path)}`;
+
+    return (
+        <div
+            className="group flex flex-col rounded-lg bg-card border border-border cursor-pointer hover:border-primary/50 transition-all duration-200 hover:shadow-lg hover:shadow-black/20 overflow-hidden h-full"
+            onClick={onClick}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+        >
+            <div className="relative aspect-video bg-muted">
+                {hoverPlaybackEnabled ? (
+                    <video
+                        ref={videoRef}
+                        poster={thumbnailUrl}
+                        src={shouldPlay ? streamUrl : undefined}
+                        className="w-full h-full object-cover"
+                        muted
+                        loop
+                        onError={(e) => {
+                            (e.target as HTMLVideoElement).style.display =
+                                "none";
+                        }}
+                    />
+                ) : (
+                    <img
+                        src={thumbnailUrl}
+                        alt={clip.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).style.display =
+                                "none";
+                        }}
+                    />
+                )}
+                {!hoverPlaybackEnabled && (
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
+                            <Play className="h-6 w-6 text-white fill-white" />
+                        </div>
+                    </div>
+                )}
+                <div
+                    className="absolute right-2 top-2 bg-primary-foreground p-0.5 rounded-sm"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <Dropdown
+                        trigger={<MoreVertical />}
+                        items={dropdownItems}
+                        classname="w-fit"
+                    />
+                    <Dialog
+                        trigger={<span className="hidden" />}
+                        dialogLabel="Переименовать клип"
+                        onActionLabel="Переименовать"
+                        children={
+                            <Input
+                                autoFocus
+                                value={newName}
+                                onChange={(e) => setNewName(e.target.value)}
+                            />
+                        }
+                        onAction={() => handleRename()}
+                        open={editing}
+                        onOpenChange={(open) => {
+                            setEditing(open);
+                        }}
+                        onCancel={() => setNewName(clip.name)}
+                    />
+                </div>
             </div>
-          </div>
-        )}
-      </div>
-      {/* Инфо */}
-      <div className="p-3 space-y-1.5">
-        <p className="text-sm font-medium leading-tight line-clamp-2 text-foreground">
-          {clip.name}
-        </p>
-        <div className="flex justify-between items-center gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <HardDrive className="h-3 w-3" />
-            {formatSize(clip.size_mb)}
-          </span>
-          <span className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            {formatDate(clip.created_at)}
-          </span>
+            {/* Инфо */}
+            <div className="p-3 space-y-1.5 flex flex-col flex-1 justify-between">
+                <p className="text-sm font-medium leading-tight line-clamp-2 text-foreground">
+                    {newName}
+                </p>
+                <div className="flex justify-between items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                        <HardDrive className="h-3 w-3" />
+                        {formatSize(clip.size_mb)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {formatDate(clip.created_at)}
+                    </span>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
-
-export default VideoCard
+export default VideoCard;

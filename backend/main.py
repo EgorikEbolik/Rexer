@@ -5,7 +5,7 @@ from loguru import logger
 import uvicorn
 from tendo import singleton
 
-from thumbnailsManager import clean_video_cache
+from thumbnailsManager import check_cache, clean_cache
 from webviewManager import run_webview
 from logger import setup_logger
 from settings import settings
@@ -28,7 +28,8 @@ try:
 
     me = singleton.SingleInstance()
 
-    clean_video_cache()
+    check_cache()
+    clean_cache()
     monitor_thread = threading.Thread(target=video_monitor.start_monitor, daemon=True)
     monitor_thread.start()
     api_thread = threading.Thread(target=start_api, daemon=True)

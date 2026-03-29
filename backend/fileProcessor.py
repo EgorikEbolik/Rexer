@@ -204,8 +204,9 @@ def move_to_dest_folder(source_file_path, window, rewrite: bool = False):
 
 
 def process_clip(file_path: Path | str, window: str) -> Path | None:
-    renamed_file = rename_template(file_path, window)
-    new_file = move_to_dest_folder(renamed_file, window)
+    is_rewrite = settings.data["rewrite_files"]
+    renamed_file = rename_template(file_path, window, is_rewrite)
+    new_file = move_to_dest_folder(renamed_file, window, is_rewrite)
 
     if new_file is None:
         logger.error("Не удалось переместить файл")

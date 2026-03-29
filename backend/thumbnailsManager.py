@@ -1,3 +1,5 @@
+import threading
+
 from utils import VIDEO_EXTENSIONS, format_time_millisec
 from paths import get_cache_dir
 from ffmpegManager import get_video_info, run_ffmpeg
@@ -176,7 +178,7 @@ def generate_thumbnail(clip_path: Path, thumbnail_width: int = 450) -> Path:
         return None
 
 
-def clean_video_cache():
+def clean_cache():
     dest_folder = settings.data["dest_folder"]
     get_cache_dir().mkdir(parents=True, exist_ok=True)
     hash_set = set()
@@ -190,8 +192,37 @@ def clean_video_cache():
         if dir.name not in hash_set:
             rmtree(dir)
             deleted_set.add(dir)
-
-    logger.debug(
-        f"Очищен кэш от {len(deleted_set)} удаленных видео, список удаленного: {deleted_set}"
-    )
+    if len(deleted_set) > 0:
+        logger.debug(
+            f"Очищен кэш от {len(deleted_set)} удаленных видео, список удаленного: {deleted_set}"
+        )
     return deleted_set
+
+
+def delete_video_cache(path: Path | str) -> None:
+    cache_dir = get_thumbnail_path(path).parent
+    if cache_dir.exists():
+        rmtree(cache_dir)
+        logger.debug(f"Удалён кэш для видео {path}")
+
+
+def check_cache():
+    dest_folder = Path(settings.data["dest_folder"])
+    for extension in VIDEO_EXTENSIONS:
+        for clip_path in dest_folder.rglob(extension):
+            if not get_thumbnail_path(clip_path).exists():
+                generate_thumbnail(clip_path)
+                logger.debug(f"Создана недостающая обложка для {clip_path}")
+            if not get_tileset_path(clip_path).exists():
+                threading.Thread(
+                    target=generate_tileset, args=(clip_path,), daemon=True
+                ).start()
+                logger.debug(f"Создан недостающий тайлсет для {clip_path}")
+
+
+def rename_video_cache(old_path: Path | str, new_path: Path | str) -> None:
+    old_cache_dir = get_thumbnail_path(old_path).parent
+    new_cache_dir = get_thumbnail_path(new_path).parent
+    if old_cache_dir.exists():
+        old_cache_dir.rename(new_cache_dir)
+        logger.debug(f"Кэш перемещён: {old_cache_dir} -> {new_cache_dir}")
