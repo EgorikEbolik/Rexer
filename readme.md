@@ -2,6 +2,9 @@
 
 Утилита для Windows которая автоматически обрабатывает replay buffer из OBS Studio - переименовывает клипы по шаблону, раскладывает по папкам и уведомляет звуком.
 
+<img width="1280" height="747" alt="Rexer_k59fUEbn3V" src="https://github.com/user-attachments/assets/c5620a29-bb80-4473-bbbe-2af69a0a2949" />
+<img width="580" height="408" alt="Rexer_RTFsFyFFqt" src="https://github.com/user-attachments/assets/d2670190-b3e2-4b1b-9a0d-171a960e1ce2" />
+
 ## Что делает
 
 - Следит за папкой куда OBS сохраняет реплеи
@@ -10,6 +13,10 @@
 - Перемещает в папку назначения с сортировкой по игре или дате
 - Воспроизводит звуковое уведомление
 - Показывает новые клипы в интерфейсе в реальном времени.
+![Rexer_ZEhoSBSssJ](https://github.com/user-attachments/assets/324b29f2-a4d0-4384-a64a-d4bd6ef51904)
+![Rexer_9rK5IjfaCA](https://github.com/user-attachments/assets/c2b3f4bc-870f-47aa-9252-b104eea8c094)
+<img width="261" height="247" alt="Rexer_q8fNKKN684" src="https://github.com/user-attachments/assets/162c11ae-c0a7-47a0-baaf-dc3ce755c86f" />
+
 
 ## Настройки
 
@@ -27,6 +34,10 @@
 - Автозапуск с Windows (`autostart`) — добавлять ли программу в автозагрузку. По умолчанию `false`.
 - Воспроизведение при наведении (`hover_playback`) — запускать ли предпросмотр клипа при наведении мыши на миниатюру. По умолчанию `true`.
 - Качество миниатюр (`tileset_quality`) — степень сжатия JPEG для превью на таймлайне (1 — наилучшее, 31 — наихудшее). По умолчанию `10`.
+
+<img width="1280" height="747" alt="Rexer_OhUShsEnk9" src="https://github.com/user-attachments/assets/d203a531-60ff-4eab-9562-1921a4e7203f" />
+<img width="1280" height="747" alt="Rexer_3jZEDzA1s2" src="https://github.com/user-attachments/assets/b9143f0b-b255-47db-b185-059ebcabac9d" />
+
 
 ## Требования системы
 
