@@ -121,28 +121,38 @@ def rename_template(
 
 # переименование файла
 def rename_simple(
-    file_path: Path | str, new_name: str, rewrite: bool = False
+    file_path: Path | str,
+    new_name: str,
+    rewrite: bool = False,
+    retries: int = 4,
+    retry_delay: float = 1.0,
 ) -> Path | None:
-    try:
-        if not wait_until_available(file_path):
-            logger.warning(f"Файл не готов, но пробуем обработать: {file_path}")
+    for attempt in range(retries):
+        try:
+            if not wait_until_available(file_path):
+                logger.warning(f"Файл не готов, но пробуем обработать: {file_path}")
 
-        file = Path(file_path)
+            file = Path(file_path)
+            renamed = file.with_stem(new_name)
+            renamed = get_available_filename(renamed, rewrite)
+            file.replace(renamed)
+            logger.info(f"Переименован: {file} ---> {renamed}")
+            return renamed
+        except PermissionError:
+            logger.warning(
+                f"Нет доступа к файлу, попытка {attempt + 1}/{retries}: {file_path}"
+            )
+            if attempt < retries - 1:
+                sleep(retry_delay)
+        except FileNotFoundError:
+            logger.error(f"Файл не найден: {file_path}")
+            return None
+        except Exception as e:
+            logger.exception(f"Неизвестная ошибка при обработке {file_path}: {e}")
+            return None
 
-        renamed = file.with_stem(new_name)
-        renamed = get_available_filename(renamed, rewrite)
-        file.replace(renamed)
-        logger.info(f"Переименован: {file} ---> {renamed}")
-        return renamed
-    except FileNotFoundError:
-        logger.error(f"Файл не найден: {file_path}")
-        return None
-    except PermissionError:
-        logger.error(f"Нет доступа к файлу: {file_path}")
-        return None
-    except Exception as e:
-        logger.exception(f"Неизвестная ошибка при обработке {file_path}: {e}")
-        return None
+    logger.error(f"Не удалось переименовать файл после {retries} попыток: {file_path}")
+    return None
 
 
 def get_available_filename(path: Path | str, rewrite: bool = False) -> Path:

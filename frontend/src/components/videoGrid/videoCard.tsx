@@ -31,23 +31,28 @@ const VideoCard: React.FC<{
     const [shouldPlay, setShouldPlay] = React.useState(false);
 
     const [editing, setEditing] = React.useState<boolean>(false);
+    const [currentPath, setCurrentPath] = React.useState<string>(clip.path);
+
     const [newName, setNewName] = React.useState<string>(clip.name);
     const [streamUrl, setStreamUrl] = React.useState<string>(
-        `${api}/clips/stream?path=${encodeURIComponent(clip.path)}`,
+        `${api}/clips/stream?path=${encodeURIComponent(currentPath)}`,
     );
     const [thumbnailUrl, setThumbnailUrl] = React.useState<string>(
-        `${api}/clips/thumbnail?path=${encodeURIComponent(clip.path)}`,
+        `${api}/clips/thumbnail?path=${encodeURIComponent(currentPath)}`,
     );
+    const [loading, setLoading] = React.useState<boolean>(false);
 
     const videoRef = React.useRef<HTMLVideoElement>(null);
     const hoverTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const handleRename = async () => {
+        setLoading(true);
         const res = await fetch(
-            `${api}/clips/rename?path=${encodeURIComponent(clip.path)}&name=${encodeURIComponent(newName)}`,
+            `${api}/clips/rename?path=${encodeURIComponent(currentPath)}&name=${encodeURIComponent(newName)}`,
             { method: "PATCH" },
         );
         if (res.ok) {
             const data = await res.json();
+            setCurrentPath(data.path);
             setStreamUrl(
                 `${api}/clips/stream?path=${encodeURIComponent(data.path)}`,
             );
@@ -60,6 +65,7 @@ const VideoCard: React.FC<{
             setNewName(clip.name);
             setEditing(false);
         }
+        setLoading(false);
     };
     const dropdownItems: DropdownItemInterface[] = [
         {
@@ -72,7 +78,7 @@ const VideoCard: React.FC<{
             label: "Удалить",
             onClick: async () => {
                 const res = await fetch(
-                    `${api}/clips?path=${encodeURIComponent(clip.path)}`,
+                    `${api}/clips?path=${encodeURIComponent(currentPath)}`,
                     { method: "DELETE" },
                 );
                 if (res.ok) onDelete();
@@ -137,8 +143,6 @@ const VideoCard: React.FC<{
     const formatSize = (mb: number) =>
         mb >= 1024 ? `${(mb / 1024).toFixed(1)} ГБ` : `${mb} МБ`;
 
-    // const thumbnailUrl = `${api}/clips/thumbnail?path=${encodeURIComponent(clip.path)}`;
-
     return (
         <div
             className="group flex flex-col rounded-lg bg-card border border-border cursor-pointer hover:border-primary/50 transition-all duration-200 hover:shadow-lg hover:shadow-black/20 overflow-hidden h-full"
@@ -163,7 +167,7 @@ const VideoCard: React.FC<{
                 ) : (
                     <img
                         src={thumbnailUrl}
-                        alt={clip.name}
+                        alt={newName}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                             (e.target as HTMLImageElement).style.display =
@@ -193,17 +197,23 @@ const VideoCard: React.FC<{
                         onActionLabel="Переименовать"
                         children={
                             <Input
-                                autoFocus
+                                disabled={loading}
                                 value={newName}
+                                onKeyDown={async (e) => {
+                                    if (e.key === "Enter") {
+                                        handleRename();
+                                    }
+                                }}
                                 onChange={(e) => setNewName(e.target.value)}
                             />
                         }
                         onAction={() => handleRename()}
                         open={editing}
                         onOpenChange={(open) => {
+                            if (!open) setNewName(clip.name);
                             setEditing(open);
                         }}
-                        onCancel={() => setNewName(clip.name)}
+                        isLoading={loading}
                     />
                 </div>
             </div>

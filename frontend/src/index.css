@@ -274,3 +274,8 @@ code {
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+
+/* временный фикс, инчае, непонятно почему, при включении кружки вылазят за пределы кнопки */
+.vds-menu-checkbox::after {
+    display: none !important;
+}

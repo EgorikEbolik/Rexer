@@ -10,6 +10,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "../ui/alert-dialog";
+import { Loader2 } from "lucide-react";
 
 export interface AlertDialogInterface {
     trigger: React.ReactNode;
@@ -20,9 +21,9 @@ export interface AlertDialogInterface {
     description?: string;
     isCritical?: boolean;
     open?: boolean;
-    onOpenChange?: (open: boolean) => void;
-    onCancel?: () => void;
+    isLoading?: boolean;
     children?: React.ReactNode;
+    onOpenChange?: (open: boolean) => void;
 }
 
 const Dialog: React.FC<AlertDialogInterface> = ({
@@ -34,9 +35,9 @@ const Dialog: React.FC<AlertDialogInterface> = ({
     onActionLabel,
     children,
     open,
+    isLoading,
     onOpenChange,
     onAction,
-    onCancel,
 }) => {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -56,13 +57,18 @@ const Dialog: React.FC<AlertDialogInterface> = ({
                 )}
                 {children && <div>{children}</div>}
                 <AlertDialogFooter>
-                    <AlertDialogCancel variant="outline" onClick={onCancel}>
+                    <AlertDialogCancel variant="outline" disabled={isLoading}>
                         Отмена
                     </AlertDialogCancel>
                     <AlertDialogAction
                         variant={isCritical ? "destructive" : "default"}
-                        onClick={onAction}
+                        onClick={(e) => {
+                            if (isLoading !== undefined) e.preventDefault();
+                            onAction();
+                        }}
+                        disabled={isLoading}
                     >
+                        {isLoading && <Loader2 className="animate-spin mr-2" />}
                         {onActionLabel}
                     </AlertDialogAction>
                 </AlertDialogFooter>

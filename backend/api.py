@@ -20,6 +20,7 @@ from thumbnailsManager import (
     get_tileset_path,
     get_vtt_path,
     rename_video_cache,
+    update_vtt,
 )
 from ffmpegManager import ensure_ffmpeg
 from utils import VIDEO_EXTENSIONS, delete_file
@@ -204,6 +205,7 @@ def rename_clip(path: str, name: str):
     if new_path is None:
         return {"error": "Не удалось переименовать файл"}
     rename_video_cache(path, new_path)
+    update_vtt(new_path)
     return {"ok": True, "path": str(new_path)}
 
 

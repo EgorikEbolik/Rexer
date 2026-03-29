@@ -226,3 +226,39 @@ def rename_video_cache(old_path: Path | str, new_path: Path | str) -> None:
     if old_cache_dir.exists():
         old_cache_dir.rename(new_cache_dir)
         logger.debug(f"Кэш перемещён: {old_cache_dir} -> {new_cache_dir}")
+
+
+def update_vtt(clip_path: Path | str) -> None:
+    clip_path = Path(clip_path)
+    tileset_path = get_tileset_path(clip_path)
+    if not tileset_path.exists():
+        return
+
+    video_info = get_video_info(clip_path)
+    if not video_info:
+        return
+
+    fps = video_info["fps"]
+    duration = video_info["duration"]
+    width = video_info["resolution"][0]
+    height = video_info["resolution"][1]
+    tile_item_width = 150
+    tile_x_count = 10
+    interval_sec = 1
+
+    frame_interval = round(fps * interval_sec)
+    selected_frames = int(duration * fps) // frame_interval
+    if selected_frames == 0:
+        selected_frames = 1
+    tile_height = round(height * (tile_item_width / width))
+
+    generate_vtt_for_tileset(
+        clip_path,
+        tileset_path,
+        duration,
+        selected_frames,
+        interval_sec,
+        tile_item_width,
+        tile_height,
+        tile_x_count,
+    )
