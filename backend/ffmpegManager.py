@@ -3,6 +3,7 @@ import subprocess
 import sys
 import shutil
 import zipfile
+import threading
 from pathlib import Path
 
 import ffmpeg
@@ -16,9 +17,11 @@ FFMPEG_EXE = "ffmpeg.exe" if sys.platform == "win32" else "ffmpeg"
 FFPROBE_EXE = "ffprobe.exe" if sys.platform == "win32" else "ffprobe"
 FFMPEG_URL = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
 
+# один поток качает, остальные ждут и находят готовый бинарник
+_ensure_lock = threading.Lock()
+
 
 def get_ffmpeg_path() -> Path | None:
-    """Возвращает путь к ffmpeg, если найден локально или в PATH."""
     local_ffmpeg = get_bin_dir() / FFMPEG_EXE
     if local_ffmpeg.exists():
         return local_ffmpeg
@@ -43,55 +46,55 @@ def get_ffprobe_path() -> Path | None:
 
 
 def ensure_ffmpeg(broadcast_fn=None) -> bool:
-    """Скачивает и распаковывает ffmpeg, если его нет"""
-
-    def on_progress(pct):
-        if broadcast_fn:
-            broadcast_fn(
-                {"type": "ffmpeg_progress", "stage": "downloading", "percent": pct}
-            )
-
     if get_ffmpeg_path() and get_ffprobe_path():
         return True
 
-    logger.info("ffmpeg или ffprobe не найден, начинаем загрузку")
+    with _ensure_lock:
+        if get_ffmpeg_path() and get_ffprobe_path():
+            return True
 
-    bin_dir = get_bin_dir()
-    bin_dir.mkdir(parents=True, exist_ok=True)
-    zip_path = bin_dir / "ffmpeg.zip"
+        def on_progress(pct):
+            if broadcast_fn:
+                broadcast_fn(
+                    {"type": "ffmpeg_progress", "stage": "downloading", "percent": pct}
+                )
 
-    try:
-        download_file(FFMPEG_URL, zip_path, on_progress=on_progress)
+        logger.info("ffmpeg или ffprobe не найден, начинаем загрузку")
 
-        if broadcast_fn:
-            broadcast_fn(
-                {"type": "ffmpeg_progress", "stage": "extracting", "percent": 0}
-            )
-        extract_ffmpeg(zip_path, bin_dir)
+        bin_dir = get_bin_dir()
+        bin_dir.mkdir(parents=True, exist_ok=True)
+        zip_path = bin_dir / "ffmpeg.zip"
 
-        if broadcast_fn:
-            broadcast_fn({"type": "ffmpeg_ready"})
+        try:
+            download_file(FFMPEG_URL, zip_path, on_progress=on_progress)
 
-        logger.info("ffmpeg успешно загружен и готов к работе")
-        return True
+            if broadcast_fn:
+                broadcast_fn(
+                    {"type": "ffmpeg_progress", "stage": "extracting", "percent": 0}
+                )
+            extract_ffmpeg(zip_path, bin_dir)
 
-    except Exception as e:
-        logger.exception("Ошибка загрузки ffmpeg")
-        if broadcast_fn:
-            broadcast_fn({"type": "ffmpeg_error", "message": str(e)})
-        return False
+            if broadcast_fn:
+                broadcast_fn({"type": "ffmpeg_ready"})
 
-    finally:
-        if zip_path.exists():
-            zip_path.unlink(missing_ok=True)
+            logger.info("ffmpeg успешно загружен и готов к работе")
+            return True
+
+        except Exception as e:
+            logger.exception("Ошибка загрузки ffmpeg")
+            if broadcast_fn:
+                broadcast_fn({"type": "ffmpeg_error", "message": str(e)})
+            return False
+
+        finally:
+            if zip_path.exists():
+                try:
+                    zip_path.unlink()
+                except Exception:
+                    pass
 
 
 def get_ffmpeg_bin() -> str:
-    """
-    Возвращает путь к исполняемому файлу ffmpeg
-    При отсутствии - пытается скачать автоматически
-    Выбрасывает RuntimeError, если ffmpeg недоступен
-    """
     ffmpeg_path = get_ffmpeg_path()
 
     if not ffmpeg_path:
@@ -128,7 +131,6 @@ def get_ffprobe_bin() -> str:
 
 
 def extract_ffmpeg(zip_path: Path, bin_dir: Path) -> None:
-    """Извлекает ffmpeg.exe из архива в bin_dir и удаляет временные папки"""
     logger.info("Распаковка архива...")
 
     before = set(bin_dir.iterdir())
@@ -149,7 +151,7 @@ def extract_ffmpeg(zip_path: Path, bin_dir: Path) -> None:
     source_dir = ffmpeg_dir / "bin"
 
     if not source_dir.exists():
-        raise FileNotFoundError(f"'Папка bin не найдена внутри архива)")
+        raise FileNotFoundError("Папка bin не найдена внутри архива")
 
     for file in source_dir.iterdir():
         if file.is_file():
@@ -183,7 +185,10 @@ def run_ffmpeg(ffmpeg_action, is_debug: bool = False) -> bool:
 
 
 # запуск ffprobe без окна, так же как run_ffmpeg, но еще принимает любые кварги и подставляет их в команду
-def run_ffprobe(file: str | Path, cmd=get_ffprobe_bin(), **kwargs):
+def run_ffprobe(file: str | Path, cmd: str = None, **kwargs):
+    if cmd is None:
+        cmd = get_ffprobe_bin()
+
     args = [cmd, "-show_format", "-show_streams", "-of", "json"]
     file = str(Path(file))
 

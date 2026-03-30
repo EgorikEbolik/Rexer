@@ -45,13 +45,14 @@ const VideoCard: React.FC<{
     const videoRef = React.useRef<HTMLVideoElement>(null);
     const hoverTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const handleRename = async () => {
+        setShouldPlay(false);
         setLoading(true);
         const res = await fetch(
             `${api}/clips/rename?path=${encodeURIComponent(currentPath)}&name=${encodeURIComponent(newName)}`,
             { method: "PATCH" },
         );
-        if (res.ok) {
-            const data = await res.json();
+        const data = await res.json();
+        if (res.ok && data.path) {
             setCurrentPath(data.path);
             setStreamUrl(
                 `${api}/clips/stream?path=${encodeURIComponent(data.path)}`,
@@ -155,6 +156,7 @@ const VideoCard: React.FC<{
                     <video
                         ref={videoRef}
                         poster={thumbnailUrl}
+                        preload="none"
                         src={shouldPlay ? streamUrl : undefined}
                         className="w-full h-full object-cover"
                         muted
@@ -168,6 +170,8 @@ const VideoCard: React.FC<{
                     <img
                         src={thumbnailUrl}
                         alt={newName}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover"
                         onError={(e) => {
                             (e.target as HTMLImageElement).style.display =

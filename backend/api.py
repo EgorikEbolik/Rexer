@@ -49,15 +49,7 @@ def make_broadcast_fn(loop, manager):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await _set_loop()
-    asyncio.create_task(delayed_ffmpeg_check())
     yield
-
-
-async def delayed_ffmpeg_check():
-    await asyncio.sleep(3)
-    loop = asyncio.get_running_loop()
-    broadcast_fn = make_broadcast_fn(loop, manager)
-    await asyncio.to_thread(ensure_ffmpeg, broadcast_fn)
 
 
 app = FastAPI(lifespan=lifespan)
