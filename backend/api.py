@@ -197,7 +197,7 @@ def rename_clip(path: str, name: str):
     if new_path is None:
         return {"error": "Не удалось переименовать файл"}
     rename_video_cache(path, new_path)
-    update_vtt(new_path)
+    threading.Thread(target=update_vtt, args=(path, new_path), daemon=True).start()
     return {"ok": True, "path": str(new_path)}
 
 
