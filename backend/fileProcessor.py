@@ -1,5 +1,6 @@
 from pathlib import Path
 import shutil
+import threading
 from time import sleep
 from loguru import logger
 from datetime import datetime
@@ -12,7 +13,7 @@ from state import manager
 
 MAX_WAIT_TIME = 30
 STABLE_COUNT_REQUIRED = 3
-CHECK_INTERVAL = 0.5
+CHECK_INTERVAL = 0.2
 
 
 def notify_new_clip(clip_data: dict):
@@ -60,12 +61,12 @@ def apply_template(window: str, dt: datetime, template: str = None) -> str:
 
 
 def wait_until_available(file_path: str | Path, timeout: int = MAX_WAIT_TIME) -> bool:
-    """Ожидает, пока файл перестанет изменяться, не дольше timeout секунд. Возвращает True, если готов."""
+    # Ожидает, пока файл перестанет изменяться, не дольше timeout секунд. Возвращает True когда файл готов
     file_path = Path(file_path)
     if not file_path.exists():
         logger.error(f"Файл не существует: {file_path}")
         return False
-
+    logger.debug(f"Начало перемещения файла {file_path.name} ")
     stable_count = 0
     last_size = -1
     elapsed = 0
@@ -173,7 +174,7 @@ def get_available_filename(path: Path | str, rewrite: bool = False) -> Path:
     return new_path
 
 
-def move_to_dest_folder(source_file_path, window, rewrite: bool = False):
+def move_to_dest_folder(source_file_path, window, rewrite: bool = False) -> Path | None:
     """Перемещает файл в папку назначения с учётом сортировки. Возвращает Path нового файла или None."""
     file_path = Path(source_file_path)
     if not file_path.exists():
@@ -222,6 +223,12 @@ def process_clip(file_path: Path | str, window: str) -> Path | None:
         logger.error("Не удалось переместить файл")
         return None
 
+    if settings.data["sound_enabled"]:
+        # play_sound(settings.data["sound_file"])
+        threading.Thread(
+            target=play_sound, args=(settings.data["sound_file"],), daemon=True
+        ).start()
+
     notify_new_clip(
         {
             "name": new_file.stem,
@@ -232,6 +239,5 @@ def process_clip(file_path: Path | str, window: str) -> Path | None:
             "game": window if settings.data["sort_mode"] == "game" else None,
         }
     )
-    if settings.data["sound_enabled"]:
-        play_sound(settings.data["sound_file"])
+
     return new_file
