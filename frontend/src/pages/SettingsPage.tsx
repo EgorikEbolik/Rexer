@@ -447,8 +447,9 @@ const SettingsPage: React.FC = () => {
                     <div className="flex items-center justify-between">
                         <div>
                             <Label>Режим отладки</Label>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                                Включить режим для отладки программы
+                            <p className="text-xs text-muted-foreground mt-0.5 text-left">
+                                Включить режим для отладки программы <br /> (Для
+                                активации нужен перезапуск)
                             </p>
                         </div>
                         <Switch
