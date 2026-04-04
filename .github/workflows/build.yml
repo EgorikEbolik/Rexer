@@ -26,6 +26,9 @@ jobs:
         with:
           node-version: '20'
 
+      - name: 🏷️ Подготовка версии и changelog
+        run: python prepare_release.py
+      
       - name: 📦 Зависимости фронтенда
         run: npm ci
         working-directory: frontend
@@ -53,7 +56,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: Rexer-Windows.zip
-          generate_release_notes: true
+          generate_release_notes: false
+          body_path: release_notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYTHONUTF8: 1
