@@ -43,8 +43,9 @@ def background_init():
 
     broadcast_fn = make_broadcast_fn(manager.loop, manager) if manager.loop else None
     ensure_ffmpeg(broadcast_fn)
-    check_cache()
-    clean_cache()
+
+    threading.Thread(target=check_cache, daemon=True).start()
+    threading.Thread(target=clean_cache, daemon=True).start()
 
 
 try:

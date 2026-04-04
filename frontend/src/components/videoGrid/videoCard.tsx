@@ -11,6 +11,7 @@ import Dropdown, { type DropdownItemInterface } from "../dropdown";
 import Dialog from "../AlertDialog";
 import { Input } from "../ui/input";
 import useClipActions from "@/hooks/useClipActions";
+import { useThumbnail } from "@/hooks/useThumb";
 
 export interface Clip {
     name: string;
@@ -39,9 +40,7 @@ const VideoCard: React.FC<{
     const [streamUrl, setStreamUrl] = React.useState<string>(
         `${api}/clips/stream?path=${encodeURIComponent(currentPath)}`,
     );
-    const [thumbnailUrl, setThumbnailUrl] = React.useState<string>(
-        `${api}/clips/thumbnail?path=${encodeURIComponent(currentPath)}`,
-    );
+    const thumbnailUrl = useThumbnail(api, currentPath);
     const [loading, setLoading] = React.useState<boolean>(false);
 
     const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -60,9 +59,7 @@ const VideoCard: React.FC<{
                 setStreamUrl(
                     `${api}/clips/stream?path=${encodeURIComponent(newPath)}`,
                 );
-                setThumbnailUrl(
-                    `${api}/clips/thumbnail?path=${encodeURIComponent(newPath)}`,
-                );
+
                 onRename(newPath, newName);
             },
             () => {
@@ -166,7 +163,7 @@ const VideoCard: React.FC<{
                                 "none";
                         }}
                     />
-                ) : (
+                ) : thumbnailUrl ? (
                     <img
                         src={thumbnailUrl}
                         alt={newName}
@@ -178,6 +175,8 @@ const VideoCard: React.FC<{
                                 "none";
                         }}
                     />
+                ) : (
+                    <div className="w-full h-full bg-muted animate-pulse" />
                 )}
                 {!hoverPlaybackEnabled && (
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

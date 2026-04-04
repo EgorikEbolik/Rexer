@@ -8,6 +8,7 @@ import { type Clip } from "@/components/videoGrid/videoCard";
 import { Button } from "./components/ui/button.tsx";
 import useSocket, { type FfmpegProgressType } from "./hooks/useSocket.ts";
 import { Toaster } from "sonner";
+import { mutate } from "swr";
 
 const App: React.FC = () => {
     const [ffmpegStatus, setFfmpegStatus] = React.useState<
@@ -17,7 +18,11 @@ const App: React.FC = () => {
     const [clips, setClips] = React.useState<Clip[]>([]);
 
     const onNewClip = React.useCallback((clip: Clip) => {
-        setClips((prev) => [clip, ...prev]);
+        mutate(
+            `http://localhost:8765/clips`,
+            (prev: Clip[] = []) => [clip, ...prev],
+            false,
+        );
     }, []);
 
     const onFfmpegUpdate = React.useCallback((data: FfmpegProgressType) => {

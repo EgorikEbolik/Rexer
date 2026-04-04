@@ -279,3 +279,12 @@ code {
 .vds-menu-checkbox::after {
     display: none !important;
 }
+
+.page-enter {
+    animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

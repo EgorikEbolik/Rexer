@@ -7,7 +7,7 @@ import win32gui
 from win32com.shell import shell, shellcon
 import asyncio
 from pathlib import Path
-from fastapi import FastAPI, HTTPException, WebSocket, status
+from fastapi import FastAPI, HTTPException, Response, WebSocket, status
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -17,6 +17,7 @@ from thumbnailsManager import (
     delete_video_cache,
     generate_thumbnail,
     generate_tileset,
+    get_thumbnail_path,
     get_tileset_path,
     get_vtt_path,
     rename_video_cache,
@@ -143,12 +144,15 @@ def stream_clip(path: str):
 
 @app.get("/clips/thumbnail")
 def get_thumbnail(path: str):
-    thumbnail = generate_thumbnail(Path(path))
-    if thumbnail is None:
-        return {"error": "Файл не найден"}
+    thumb_path = get_thumbnail_path(path)
+    if not thumb_path.exists():
+        threading.Thread(
+            target=generate_thumbnail, args=(Path(path),), daemon=True
+        ).start()
+        return Response(status_code=status.HTTP_202_ACCEPTED)
     if not get_tileset_path(path).exists():
         threading.Thread(target=generate_tileset, args=(path,), daemon=True).start()
-    return FileResponse(str(thumbnail))
+    return FileResponse(str(thumb_path))
 
 
 @app.get("/clips/tileset")

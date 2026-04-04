@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+// import { useState, useEffect } from 'react';
+import useSWR from "swr"
 
 const API = "http://localhost:8765";
 
@@ -19,42 +20,18 @@ export interface Settings {
   debug: boolean,
 }
 
-let cachedSettings: Settings | null = null;
+const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 export const useSettings = () => {
-  const [settings, setSettings] = useState<Settings | null>(cachedSettings);
-  const [loading, setLoading] = useState(!cachedSettings);
+  const { data, isLoading, mutate } = useSWR<Settings>(
+    `${API}/settings`,
+    fetcher,
+    { revalidateOnFocus: false, revalidateIfStale: false }
+  );
 
-  useEffect(() => {
-    if (!cachedSettings) {
-      fetch(`${API}/settings`)
-        .then(res => res.json())
-        .then((data: Settings) => {
-          cachedSettings = data;
-          setSettings(data);
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error('Не получилось загрузить настройки:', err);
-          setLoading(false);
-        });
-    }
-  }, []);
-
-  const reloadSettings = () => {
-    setLoading(true);
-    fetch(`${API}/settings`)
-      .then(res => res.json())
-      .then((data: Settings) => {
-        cachedSettings = data;
-        setSettings(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to load settings:', err);
-        setLoading(false);
-      });
+  return {
+    settings: data ?? null,
+    loading: isLoading,
+    reloadSettings: () => mutate()
   };
-
-  return { settings, loading, reloadSettings };
 }

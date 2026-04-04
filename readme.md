@@ -60,7 +60,7 @@
 
 **Бэкенд:** Python 3.11, FastAPI, watchdog, pywin32, psutil, pystray, loguru, pywebview, ffmpeg-python
 
-**Фронтенд:** React, TypeScript, Vite, Tailwind CSS, shadcn/ui, vidstack, react-virtuoso
+**Фронтенд:** React, TypeScript, Vite, Tailwind CSS, shadcn/ui, vidstack, react-virtuoso, Vercel useSWR
 
 ## Структура
 
@@ -128,10 +128,9 @@ python build.py
 Результат появится в папке `release/`:
 
 ```
-release/
-├──_internal
-├── Rexer.exe
-└── resources/
-    └── done.wav
+├── _internal/
+│   └── resources/
+│       └── done.wav
+└── Rexer.exe
 ```
 

@@ -110,7 +110,7 @@ const SettingsPage: React.FC = () => {
         );
 
     return (
-        <div className="max-w-2xl mx-auto py-8 px-4 space-y-6">
+        <div className="max-w-2xl mx-auto py-8 px-4 space-y-6 page-enter">
             <h1 className="text-2xl font-bold">Настройки</h1>
 
             {/* Папки */}

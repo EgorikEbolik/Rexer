@@ -1,18 +1,11 @@
-import React, { useEffect, useCallback, forwardRef } from "react";
+import React, { useCallback, forwardRef } from "react";
 import { Film, Loader2, SortAsc, SortDesc } from "lucide-react";
 import VideoCard, { type Clip } from "@/components/videoGrid/videoCard";
 import PlayerModal from "@/components/videoGrid/player";
-import { useOutletContext } from "react-router";
 import { VirtuosoGrid, type VirtuosoGridProps } from "react-virtuoso";
 import { Button } from "@/components/ui/button";
-
 import { useSettings } from "@/hooks/useSettings";
-
-type OutletContext = {
-    clips: Clip[];
-    setClips: React.Dispatch<React.SetStateAction<Clip[]>>;
-    onNewClip: (clip: Clip) => void;
-};
+import { useClips } from "@/hooks/useClips";
 
 const gridComponents: VirtuosoGridProps<undefined, undefined>["components"] = {
     List: forwardRef(({ children, ...props }, ref) => (
@@ -30,12 +23,20 @@ const gridComponents: VirtuosoGridProps<undefined, undefined>["components"] = {
 const ClipsPage: React.FC = () => {
     const API = "http://localhost:8765";
 
-    const { clips, setClips } = useOutletContext<OutletContext>();
-    const [loading, setLoading] = React.useState(true);
+    const { clips, loading, mutateClips } = useClips();
     const [selected, setSelected] = React.useState<Clip | null>(null);
     const [sort, setSort] = React.useState<"desc" | "asc">("desc");
-
     const { settings: settingsData } = useSettings();
+
+    const sortedClips = React.useMemo(
+        () =>
+            [...clips].sort((a, b) =>
+                sort === "desc"
+                    ? b.created_at - a.created_at
+                    : a.created_at - b.created_at,
+            ),
+        [clips, sort],
+    );
 
     const formatter = new Intl.PluralRules("ru");
     const forms = {
@@ -46,39 +47,8 @@ const ClipsPage: React.FC = () => {
         two: "клипа",
         other: "клипов",
     };
-    const pluralize = (count: number) => {
-        const form = formatter.select(count);
-        const word = forms[form];
-        return String(count + " " + word);
-    };
-    useEffect(() => {
-        const fetchClips = async () => {
-            try {
-                const response = await fetch(`${API}/clips`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error ${response.status}`);
-                }
-                const data = await response.json();
-                const sorted_data =
-                    sort === "desc"
-                        ? data.toSorted(
-                              (a: Clip, b: Clip) =>
-                                  b["created_at"] - a["created_at"],
-                          )
-                        : data.toSorted(
-                              (a: Clip, b: Clip) =>
-                                  a["created_at"] - b["created_at"],
-                          );
-                setClips(sorted_data);
-                console.log("Новый клип:", data);
-            } catch (error) {
-                console.error("Ошибка загрузки клипов:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchClips();
-    }, [API, setClips, sort]);
+    const pluralize = (count: number) =>
+        `${count} ${forms[formatter.select(count)]}`;
 
     const closeModal = useCallback(() => setSelected(null), []);
 
@@ -91,7 +61,7 @@ const ClipsPage: React.FC = () => {
         );
     }
 
-    if (clips.length === 0) {
+    if (sortedClips.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
                 <Film className="h-12 w-12 opacity-20" />
@@ -104,33 +74,23 @@ const ClipsPage: React.FC = () => {
     }
 
     return (
-        <div className="p-6 flex flex-col h-full pb-0!">
+        <div className="p-6 flex flex-col h-full pb-0! page-enter">
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold flex-4">Клипы</h1>
                 <div className="flex flex-col items-center">
                     <span className="text-sm text-muted-foreground mb-2">
-                        {pluralize(clips.length)}
+                        {pluralize(sortedClips.length)}
                     </span>
                     <div className="flex items-center">
                         <span className="text-xs text-muted-foreground mr-2 min-w-25">
                             {sort === "asc" ? "По возрастанию" : "По убыванию"}
                         </span>
                         {sort === "desc" ? (
-                            <Button
-                                size="icon"
-                                onClick={() => {
-                                    setSort("asc");
-                                }}
-                            >
+                            <Button size="icon" onClick={() => setSort("asc")}>
                                 <SortDesc />
                             </Button>
                         ) : (
-                            <Button
-                                size="icon"
-                                onClick={() => {
-                                    setSort("desc");
-                                }}
-                            >
+                            <Button size="icon" onClick={() => setSort("desc")}>
                                 <SortAsc />
                             </Button>
                         )}
@@ -140,32 +100,41 @@ const ClipsPage: React.FC = () => {
 
             <VirtuosoGrid
                 className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-1"
-                totalCount={clips.length}
+                totalCount={sortedClips.length}
                 components={gridComponents}
                 overscan={600}
                 itemContent={(index) => (
                     <VideoCard
-                        key={clips[index].path}
+                        key={sortedClips[index].path}
                         api={API}
-                        clip={clips[index]}
+                        clip={sortedClips[index]}
                         hoverPlaybackEnabled={
                             settingsData?.hover_playback ?? true
                         }
-                        onClick={() => setSelected(clips[index])}
+                        onClick={() => setSelected(sortedClips[index])}
                         onDelete={() =>
-                            setClips((prev) =>
-                                prev.filter(
-                                    (c) => c.path !== clips[index].path,
-                                ),
+                            mutateClips(
+                                (prev) =>
+                                    prev?.filter(
+                                        (c) =>
+                                            c.path !== sortedClips[index].path,
+                                    ),
+                                false,
                             )
                         }
-                        onRename={(newPath: string, newName: string) => {
-                            setClips((prev) =>
-                                prev.map((c) =>
-                                    c.path === clips[index].path
-                                        ? { ...c, path: newPath, name: newName }
-                                        : c,
-                                ),
+                        onRename={(newPath, newName) => {
+                            mutateClips(
+                                (prev) =>
+                                    prev?.map((c) =>
+                                        c.path === sortedClips[index].path
+                                            ? {
+                                                  ...c,
+                                                  path: newPath,
+                                                  name: newName,
+                                              }
+                                            : c,
+                                    ),
+                                false,
                             );
                             setSelected((prev) =>
                                 prev
@@ -176,23 +145,28 @@ const ClipsPage: React.FC = () => {
                     />
                 )}
             />
+
             {selected && (
                 <PlayerModal
                     api={API}
                     clip={selected}
                     onClose={closeModal}
                     onDelete={() =>
-                        setClips((prev) =>
-                            prev.filter((c) => c.path !== selected.path),
+                        mutateClips(
+                            (prev) =>
+                                prev?.filter((c) => c.path !== selected.path),
+                            false,
                         )
                     }
-                    onRename={(newPath: string, newName: string) => {
-                        setClips((prev) =>
-                            prev.map((c) =>
-                                c.path === selected.path
-                                    ? { ...c, path: newPath, name: newName }
-                                    : c,
-                            ),
+                    onRename={(newPath, newName) => {
+                        mutateClips(
+                            (prev) =>
+                                prev?.map((c) =>
+                                    c.path === selected.path
+                                        ? { ...c, path: newPath, name: newName }
+                                        : c,
+                                ),
+                            false,
                         );
                         setSelected((prev) =>
                             prev
