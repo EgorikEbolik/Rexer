@@ -8,7 +8,7 @@ PYPROJECT = ROOT / "pyproject.toml"
 
 def get_version():
     tag = subprocess.check_output(
-        ["git", "describe", "--tags", "--abbrev=0"], text=True
+        ["git", "describe", "--tags", "--abbrev=0"], text=True, encoding="utf-8"
     ).strip()
     if tag.startswith("v"):
         tag = tag[1:]
@@ -25,7 +25,7 @@ def update_pyproject(version):
 
 def get_previous_tag(version):
     tags = subprocess.check_output(
-        ["git", "tag", "--sort=-v:refname"], text=True
+        ["git", "tag", "--sort=-v:refname"], text=True, encoding="utf-8"
     ).splitlines()
     current = f"v{version}"
     for tag in tags:
@@ -39,7 +39,7 @@ def get_commits_since(prev_tag):
         cmd = ["git", "log", "--pretty=format:%s", f"{prev_tag}..HEAD"]
     else:
         cmd = ["git", "log", "--pretty=format:%s"]
-    out = subprocess.check_output(cmd, text=True).strip()
+    out = subprocess.check_output(cmd, text=True, encoding="utf-8").strip()
     return [line for line in out.splitlines() if line]
 
 
