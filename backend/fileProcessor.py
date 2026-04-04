@@ -223,12 +223,6 @@ def process_clip(file_path: Path | str, window: str) -> Path | None:
         logger.error("Не удалось переместить файл")
         return None
 
-    if settings.data["sound_enabled"]:
-        # play_sound(settings.data["sound_file"])
-        threading.Thread(
-            target=play_sound, args=(settings.data["sound_file"],), daemon=True
-        ).start()
-
     notify_new_clip(
         {
             "name": new_file.stem,

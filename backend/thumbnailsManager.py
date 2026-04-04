@@ -12,6 +12,8 @@ from shutil import rmtree
 import ffmpeg
 from loguru import logger
 
+_ffmpeg_semaphore = threading.Semaphore(3)
+
 
 def create_hash(to_hash) -> str:
     return md5(str(to_hash).encode()).hexdigest()
@@ -40,78 +42,79 @@ def generate_tileset(
     interval_sec: int = 1,
     quality: int = None,
 ) -> Path | None:
-    try:
+    with _ffmpeg_semaphore:
+        try:
 
-        clip_path = Path(clip_path)
-        tileset_path = get_tileset_path(clip_path)
+            clip_path = Path(clip_path)
+            tileset_path = get_tileset_path(clip_path)
 
-        if tileset_path.exists():
-            logger.debug(f"тайлсет для видео {clip_path.stem} уже существует")
+            if tileset_path.exists():
+                logger.debug(f"тайлсет для видео {clip_path.stem} уже существует")
+                return tileset_path
+
+            video_info = get_video_info(clip_path)
+            if not video_info:
+                logger.error(f"Не удалось получить информацию о видео {clip_path.name}")
+                return None
+            if quality is None:
+                quality = settings.data["tileset_quality"]
+
+            fps = video_info["fps"]
+            duration = video_info["duration"]
+            width = video_info["resolution"][0]
+            height = video_info["resolution"][1]
+
+            total_frames = int(duration * fps)
+            if total_frames == 0:
+                logger.error(f"Видео {clip_path.name} не содержит кадров")
+                return None
+            frame_interval = round(fps * interval_sec)
+            selected_frames = total_frames // frame_interval
+
+            # для коротких видео 1 кадр
+            if selected_frames == 0:
+                selected_frames = 1
+                frame_interval = total_frames
+            # последний ряд может быть неполным
+            tile_y_count = (selected_frames + tile_x_count - 1) // tile_x_count
+            tile_height = round(height * (tile_item_width / width))
+
+            tileset_path.parent.mkdir(parents=True, exist_ok=True)
+
+            input_kwargs = {"threads": 0, "hwaccel": "auto", "skip_frame": "nokey"}
+
+            ffmpeg_command = (
+                ffmpeg.input(str(clip_path), **input_kwargs)
+                .filter("fps", fps=f"1/{interval_sec}")
+                .filter("scale", tile_item_width, -1)
+                .filter("tile", f"{tile_x_count}x{tile_y_count}")
+                .output(str(tileset_path), vframes=1, **{"q:v": quality})
+            )
+            logger.debug(f"video info: {video_info}")
+            if not run_ffmpeg(ffmpeg_command):
+                logger.error(
+                    f"Не удалось выполнить команду ffmpeg при генерации тайлсета для видео: {clip_path.name}"
+                )
+                return None
+            generate_vtt_for_tileset(
+                clip_path,
+                tileset_path,
+                duration,
+                selected_frames,
+                interval_sec,
+                tile_item_width,
+                tile_height,
+                tile_x_count,
+            )
+            logger.debug(
+                f"Создан тайлсет для видео {clip_path.name}, по пути: {tileset_path}"
+            )
             return tileset_path
-
-        video_info = get_video_info(clip_path)
-        if not video_info:
-            logger.error(f"Не удалось получить информацию о видео {clip_path.name}")
-            return None
-        if quality is None:
-            quality = settings.data["tileset_quality"]
-
-        fps = video_info["fps"]
-        duration = video_info["duration"]
-        width = video_info["resolution"][0]
-        height = video_info["resolution"][1]
-
-        total_frames = int(duration * fps)
-        if total_frames == 0:
-            logger.error(f"Видео {clip_path.name} не содержит кадров")
-            return None
-        frame_interval = round(fps * interval_sec)
-        selected_frames = total_frames // frame_interval
-
-        # для коротких видео 1 кадр
-        if selected_frames == 0:
-            selected_frames = 1
-            frame_interval = total_frames
-        # последний ряд может быть неполным
-        tile_y_count = (selected_frames + tile_x_count - 1) // tile_x_count
-        tile_height = round(height * (tile_item_width / width))
-
-        tileset_path.parent.mkdir(parents=True, exist_ok=True)
-
-        input_kwargs = {"threads": 0, "hwaccel": "auto", "skip_frame": "nokey"}
-
-        ffmpeg_command = (
-            ffmpeg.input(str(clip_path), **input_kwargs)
-            .filter("fps", fps=f"1/{interval_sec}")
-            .filter("scale", tile_item_width, -1)
-            .filter("tile", f"{tile_x_count}x{tile_y_count}")
-            .output(str(tileset_path), vframes=1, **{"q:v": quality})
-        )
-        logger.debug(f"video info: {video_info}")
-        if not run_ffmpeg(ffmpeg_command):
-            logger.error(
-                f"Не удалось выполнить команду ffmpeg при генерации тайлсета для видео: {clip_path.name}"
+        except Exception as e:
+            logger.exception(
+                f"Ошибка при создании тайлсета для видео {clip_path.name}, {e}"
             )
             return None
-        generate_vtt_for_tileset(
-            clip_path,
-            tileset_path,
-            duration,
-            selected_frames,
-            interval_sec,
-            tile_item_width,
-            tile_height,
-            tile_x_count,
-        )
-        logger.debug(
-            f"Создан тайлсет для видео {clip_path.name}, по пути: {tileset_path}"
-        )
-        return tileset_path
-    except Exception as e:
-        logger.exception(
-            f"Ошибка при создании тайлсета для видео {clip_path.name}, {e}"
-        )
-        return None
 
 
 def generate_vtt_for_tileset(
@@ -156,26 +159,29 @@ def generate_vtt_for_tileset(
 
 
 def generate_thumbnail(clip_path: Path, thumbnail_width: int = 450) -> Path:
-    try:
-        clip_path = Path(clip_path)
-        thumbnail_path = get_thumbnail_path(clip_path)
-        if thumbnail_path.exists():
-            logger.debug(f"Обложка для видео {clip_path.stem} уже существует")
+    with _ffmpeg_semaphore:
+        try:
+            clip_path = Path(clip_path)
+            thumbnail_path = get_thumbnail_path(clip_path)
+            if thumbnail_path.exists():
+                logger.debug(f"Обложка для видео {clip_path.stem} уже существует")
+                return thumbnail_path
+
+            thumbnail_path.parent.mkdir(parents=True, exist_ok=True)
+            stream = (
+                ffmpeg.input(str(clip_path))
+                .filter("scale", thumbnail_width, -1)
+                .output(str(thumbnail_path), vframes=1)
+            )
+
+            run_ffmpeg(stream)
+            logger.debug(f"Создана обложка {thumbnail_path} для видео {clip_path.stem}")
             return thumbnail_path
-
-        thumbnail_path.parent.mkdir(parents=True, exist_ok=True)
-        stream = (
-            ffmpeg.input(str(clip_path))
-            .filter("scale", thumbnail_width, -1)
-            .output(str(thumbnail_path), vframes=1)
-        )
-
-        run_ffmpeg(stream)
-        logger.debug(f"Создана обложка {thumbnail_path} для видео {clip_path.stem}")
-        return thumbnail_path
-    except Exception as e:
-        logger.error(f"Не удалось создать обложку для видео {clip_path}, ошибка: \n{e}")
-        return None
+        except Exception as e:
+            logger.error(
+                f"Не удалось создать обложку для видео {clip_path}, ошибка: \n{e}"
+            )
+            return None
 
 
 def clean_cache():

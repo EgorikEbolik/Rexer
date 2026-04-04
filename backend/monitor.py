@@ -8,7 +8,7 @@ from thumbnailsManager import generate_thumbnail, generate_tileset
 from windowHandler import get_active_window
 from fileProcessor import process_clip
 from settings import settings
-from utils import VIDEO_EXTENSIONS, create_folder
+from utils import VIDEO_EXTENSIONS, create_folder, play_sound
 
 
 class FileMonitor(watchdog.events.PatternMatchingEventHandler):
@@ -34,6 +34,10 @@ class FileMonitor(watchdog.events.PatternMatchingEventHandler):
         try:
             window = get_active_window()
             logger.info(f"Появился новый файл {event.src_path}")
+            if settings.data["sound_enabled"]:
+                threading.Thread(
+                    target=play_sound, args=(settings.data["sound_file"],), daemon=True
+                ).start()
             new_file = process_clip(event.src_path, window)
             if new_file:
                 generate_thumbnail(new_file)
