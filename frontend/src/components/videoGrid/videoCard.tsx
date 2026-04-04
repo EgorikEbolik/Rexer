@@ -10,6 +10,7 @@ import React from "react";
 import Dropdown, { type DropdownItemInterface } from "../dropdown";
 import Dialog from "../AlertDialog";
 import { Input } from "../ui/input";
+import useClipActions from "@/hooks/useClipActions";
 
 export interface Clip {
     name: string;
@@ -28,6 +29,7 @@ const VideoCard: React.FC<{
     onDelete: () => void;
     onRename: (newPath: string, newName: string) => void;
 }> = ({ clip, api, hoverPlaybackEnabled, onClick, onDelete, onRename }) => {
+    const { renameClip, deleteClip } = useClipActions();
     const [shouldPlay, setShouldPlay] = React.useState(false);
 
     const [editing, setEditing] = React.useState<boolean>(false);
@@ -47,25 +49,27 @@ const VideoCard: React.FC<{
     const handleRename = async () => {
         setShouldPlay(false);
         setLoading(true);
-        const res = await fetch(
-            `${api}/clips/rename?path=${encodeURIComponent(currentPath)}&name=${encodeURIComponent(newName)}`,
-            { method: "PATCH" },
+
+        const oldStreamUrl = streamUrl;
+        setStreamUrl("");
+        await renameClip(
+            currentPath,
+            newName,
+            (newPath) => {
+                setCurrentPath(newPath);
+                setStreamUrl(
+                    `${api}/clips/stream?path=${encodeURIComponent(newPath)}`,
+                );
+                setThumbnailUrl(
+                    `${api}/clips/thumbnail?path=${encodeURIComponent(newPath)}`,
+                );
+                onRename(newPath, newName);
+            },
+            () => {
+                setStreamUrl(oldStreamUrl);
+            },
         );
-        const data = await res.json();
-        if (res.ok && data.path) {
-            setCurrentPath(data.path);
-            setStreamUrl(
-                `${api}/clips/stream?path=${encodeURIComponent(data.path)}`,
-            );
-            setThumbnailUrl(
-                `${api}/clips/thumbnail?path=${encodeURIComponent(data.path)}`,
-            );
-            onRename(data.path, newName);
-            setEditing(false);
-        } else {
-            setNewName(clip.name);
-            setEditing(false);
-        }
+        setEditing(false);
         setLoading(false);
     };
     const dropdownItems: DropdownItemInterface[] = [
@@ -78,11 +82,7 @@ const VideoCard: React.FC<{
         {
             label: "Удалить",
             onClick: async () => {
-                const res = await fetch(
-                    `${api}/clips?path=${encodeURIComponent(currentPath)}`,
-                    { method: "DELETE" },
-                );
-                if (res.ok) onDelete();
+                await deleteClip(currentPath, () => onDelete());
             },
             isCritical: true,
             icon: <Trash2 />,
@@ -241,4 +241,4 @@ const VideoCard: React.FC<{
     );
 };
 
-export default VideoCard;
+export default React.memo(VideoCard);

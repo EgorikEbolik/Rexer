@@ -7,7 +7,7 @@ import win32gui
 from win32com.shell import shell, shellcon
 import asyncio
 from pathlib import Path
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, HTTPException, WebSocket, status
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -22,7 +22,6 @@ from thumbnailsManager import (
     rename_video_cache,
     update_vtt,
 )
-from ffmpegManager import ensure_ffmpeg
 from utils import VIDEO_EXTENSIONS, delete_file
 from paths import get_static_dir
 from settings import settings, Settings
@@ -186,7 +185,10 @@ def update_settings(new_settings: dict[str, Any]):
 def delete_clip(path: str):
     success = delete_file(path)
     if not success:
-        return {"error": "Не удалось удалить файл"}
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Не удалось удалить файл",
+        )
     delete_video_cache(path)
     return {"ok": True}
 
@@ -195,7 +197,10 @@ def delete_clip(path: str):
 def rename_clip(path: str, name: str):
     new_path = rename_simple(path, name)
     if new_path is None:
-        return {"error": "Не удалось переименовать файл"}
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Не удалось переименовать файл",
+        )
     rename_video_cache(path, new_path)
     threading.Thread(target=update_vtt, args=(path, new_path), daemon=True).start()
     return {"ok": True, "path": str(new_path)}

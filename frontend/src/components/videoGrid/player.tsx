@@ -8,12 +8,16 @@ import {
     Check,
     Loader2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
 import type { Clip } from "./videoCard";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
-import { MediaPlayer, MediaProvider } from "@vidstack/react";
+import {
+    MediaPlayer,
+    MediaProvider,
+    type MediaPlayerInstance,
+} from "@vidstack/react";
 import {
     defaultLayoutIcons,
     DefaultVideoLayout,
@@ -23,6 +27,7 @@ import "@vidstack/react/player/styles/default/theme.css";
 import "@vidstack/react/player/styles/default/layouts/video.css";
 import { useSettings } from "@/hooks/useSettings";
 import Dialog from "../AlertDialog";
+import useClipActions from "@/hooks/useClipActions";
 
 const RUSSIAN: DefaultLayoutTranslations = {
     "Caption Styles": "Стили субтитров",
@@ -92,12 +97,15 @@ const PlayerModal: React.FC<{
 }> = ({ clip, api, onClose, onDelete, onRename }) => {
     const { settings } = useSettings();
 
+    const { renameClip, deleteClip } = useClipActions();
+
     const [editing, setEditing] = useState<boolean>(false);
     const [currentPath, setCurrentPath] = useState<string>(clip.path);
     const [newName, setNewName] = useState<string>(clip.name);
     const [streamUrl, setStreamUrl] = useState<string>(
         `${api}/clips/stream?path=${encodeURIComponent(currentPath)}`,
     );
+    const playerRef = useRef<MediaPlayerInstance>(null);
     const [vttUrl, setVttUrl] = useState<string>(
         `${api}/clips/tileset/vtt?path=${encodeURIComponent(currentPath)}`,
     );
@@ -106,26 +114,30 @@ const PlayerModal: React.FC<{
     const volume = settings?.player_default_volume ?? 0.35;
 
     const handleRename = async () => {
+        const oldStreamUrl = streamUrl;
+        playerRef.current?.pause();
+
         setLoading(true);
-        const res = await fetch(
-            `${api}/clips/rename?path=${encodeURIComponent(currentPath)}&name=${encodeURIComponent(newName)}`,
-            { method: "PATCH" },
+        setStreamUrl("");
+        await renameClip(
+            currentPath,
+            newName,
+            (newPath) => {
+                setCurrentPath(newPath);
+                setStreamUrl(
+                    `${api}/clips/stream?path=${encodeURIComponent(newPath)}`,
+                );
+                setVttUrl(
+                    `${api}/clips/tileset/vtt?path=${encodeURIComponent(newPath)}`,
+                );
+                onRename(newPath, newName);
+            },
+            () => {
+                setStreamUrl(oldStreamUrl);
+                setNewName(clip.name);
+            },
         );
-        if (res.ok) {
-            const data = await res.json();
-            setCurrentPath(data.path);
-            setStreamUrl(
-                `${api}/clips/stream?path=${encodeURIComponent(data.path)}`,
-            );
-            setVttUrl(
-                `${api}/clips/tileset/vtt?path=${encodeURIComponent(data.path)}`,
-            );
-            onRename(data.path, newName);
-            setEditing(false);
-        } else {
-            setNewName(clip.name);
-            setEditing(false);
-        }
+        setEditing(false);
         setLoading(false);
     };
 
@@ -200,10 +212,11 @@ const PlayerModal: React.FC<{
                 </div>
 
                 {/* Плеер */}
-                <div className="[&_button]:all-unset [&_button]:revert">
+                <div className="relative aspect-video bg-black">
                     <MediaPlayer
                         src={streamUrl}
-                        autoPlay
+                        ref={playerRef}
+                        autoPlay={!loading}
                         volume={volume}
                         playsInline
                         keyTarget="document"
@@ -240,7 +253,7 @@ const PlayerModal: React.FC<{
                             <Button
                                 className="w-36"
                                 disabled={loading}
-                                onClick={() => handleRename()}
+                                onClick={handleRename}
                             >
                                 {loading ? (
                                     <Loader2 className="animate-spin" />
@@ -278,14 +291,10 @@ const PlayerModal: React.FC<{
                             onActionLabel="Удалить"
                             onAction={async () => {
                                 setLoading(true);
-                                const res = await fetch(
-                                    `${api}/clips?path=${encodeURIComponent(currentPath)}`,
-                                    { method: "DELETE" },
-                                );
-                                if (res.ok) {
+                                await deleteClip(currentPath, () => {
                                     onDelete();
                                     onClose();
-                                }
+                                });
                                 setLoading(false);
                             }}
                         />

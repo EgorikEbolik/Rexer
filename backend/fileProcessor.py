@@ -12,7 +12,7 @@ from settings import settings
 from state import manager
 
 MAX_WAIT_TIME = 30
-STABLE_COUNT_REQUIRED = 3
+STABLE_COUNT_REQUIRED = 4
 CHECK_INTERVAL = 0.2
 
 
@@ -66,7 +66,7 @@ def wait_until_available(file_path: str | Path, timeout: int = MAX_WAIT_TIME) ->
     if not file_path.exists():
         logger.error(f"Файл не существует: {file_path}")
         return False
-    logger.debug(f"Начало перемещения файла {file_path.name} ")
+    logger.debug(f"Начало ожидания доступности {file_path.name} ")
     stable_count = 0
     last_size = -1
     elapsed = 0
