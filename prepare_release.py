@@ -70,4 +70,4 @@ if __name__ == "__main__":
     commits = get_commits_since(prev)
     changelog = generate_changelog(version, commits)
     (ROOT / "release_notes.md").write_text(changelog)
-    print(f"Для версии {version} готово {len(commits)} записей в changelog ")
+    print(f"Created {len(commits)} entries in version {version} changelog")
