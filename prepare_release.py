@@ -2,7 +2,7 @@ import re
 import subprocess
 from pathlib import Path
 
-ROOT = Path(__file__).parent.parent
+ROOT = Path(__file__).parent
 PYPROJECT = ROOT / "pyproject.toml"
 
 
