@@ -21,6 +21,7 @@ class Settings:
         "hover_playback": True,
         "tileset_quality": 10,  # 1-лучшее, 31 - худшее
         "rewrite_files": False,  # Перезаписывать или добалвять цифру чтобы сделать уникальным
+        "debug": False,
     }
 
     def __init__(self) -> None:

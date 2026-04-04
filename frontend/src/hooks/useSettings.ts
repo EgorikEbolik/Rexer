@@ -16,6 +16,7 @@ export interface Settings {
   hover_playback: boolean;
   tileset_quality: number;
   rewrite_files: boolean,
+  debug: boolean,
 }
 
 let cachedSettings: Settings | null = null;
