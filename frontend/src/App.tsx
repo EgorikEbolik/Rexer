@@ -15,8 +15,6 @@ const App: React.FC = () => {
         null | "downloading" | "extracting" | "ready" | "error"
     >(null);
     const [ffmpegProgress, setFfmpegProgress] = React.useState(0);
-    const [clips, setClips] = React.useState<Clip[]>([]);
-
     const onNewClip = React.useCallback((clip: Clip) => {
         mutate(
             `http://localhost:8765/clips`,
@@ -56,7 +54,7 @@ const App: React.FC = () => {
                 <div className="flex min-h-screen w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none">
                     <AppSidebar />
                     <main className="flex-1 p-6 min-w-0">
-                        <Outlet context={{ onNewClip, clips, setClips }} />
+                        <Outlet />
                     </main>
                 </div>
 
