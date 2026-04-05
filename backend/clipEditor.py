@@ -1,3 +1,4 @@
+import os
 import shutil
 import tempfile
 from loguru import logger
@@ -27,6 +28,11 @@ def trim_video(
             logger.error(f"Файл по пути '{path}' не существует")
             return None
         logger.debug(f"Начало обрезки, rewrite = {rewrite}")
+
+        original_stat = path.stat()
+        original_mtime = original_stat.st_mtime
+        original_atime = original_stat.st_atime
+
         if rewrite:
             with tempfile.NamedTemporaryFile(
                 suffix=path.suffix, delete=False
@@ -59,6 +65,11 @@ def trim_video(
 
             run_ffmpeg(command)
             result_path = new_path
+
+        try:
+            os.utime(result_path, (original_atime, original_mtime))
+        except Exception as e:
+            logger.warning(f"Не удалось восстановить время файла {result_path}: {e}")
 
         logger.info(f"Обрезано видео {path}")
         return result_path
