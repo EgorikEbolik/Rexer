@@ -7,7 +7,6 @@ from datetime import datetime
 import asyncio
 
 from tray import update_last_clip
-from utils import play_sound
 from settings import settings
 from state import manager
 
@@ -28,6 +27,28 @@ def notify_new_clip(clip_data: dict):
         )
         logger.debug(
             f"notify_new_clip вызван, active={len(manager.active)}, loop={manager.loop}"
+        )
+    except RuntimeError as e:
+        logger.error(
+            f"Не удалось отправить уведомление: {e} (возможно, цикл событий закрыт)"
+        )
+    except Exception as e:
+        logger.exception(f"Неизвестная ошибка при отправке уведомления: {e}")
+
+
+def notify_updated_clip(clip_data: dict):
+    logger.debug(
+        f"notify_updated_clip: active={len(manager.active)}, loop={manager.loop}"
+    )
+    if not manager.active or manager.loop is None:
+        logger.warning("Нет активных сокетов или loop не инициализирован")
+        return
+    try:
+        asyncio.run_coroutine_threadsafe(
+            manager.broadcast({"type": "updated_clip", "clip": clip_data}), manager.loop
+        )
+        logger.debug(
+            f"notify_updated_clip вызван, active={len(manager.active)}, loop={manager.loop}"
         )
     except RuntimeError as e:
         logger.error(

@@ -20,6 +20,7 @@ export interface Clip {
     size_mb: number;
     created_at: number;
     game: string | null;
+    _t?: number; //костыль для видео которые были перезаписаны и их путь не поменялся (по научному кэш-бастер)
 }
 
 const VideoCard: React.FC<{

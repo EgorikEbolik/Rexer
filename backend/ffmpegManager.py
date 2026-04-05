@@ -11,7 +11,7 @@ from loguru import logger
 
 from utils import download_file
 from paths import get_bin_dir
-
+from settings import settings
 
 FFMPEG_EXE = "ffmpeg.exe" if sys.platform == "win32" else "ffmpeg"
 FFPROBE_EXE = "ffprobe.exe" if sys.platform == "win32" else "ffprobe"
@@ -167,6 +167,7 @@ def extract_ffmpeg(zip_path: Path, bin_dir: Path) -> None:
 # (пока только на windows)
 def run_ffmpeg(ffmpeg_action, is_debug: bool = False) -> bool:
     try:
+        is_debug = settings.data.get("debug", False)
         args = ffmpeg.compile(ffmpeg_action, cmd=get_ffmpeg_bin())
         run_kwargs = {"stdin": subprocess.DEVNULL}
 

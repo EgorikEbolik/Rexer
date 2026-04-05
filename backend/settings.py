@@ -21,6 +21,7 @@ class Settings:
         "hover_playback": True,
         "tileset_quality": 10,  # 1-лучшее, 31 - худшее
         "rewrite_files": False,  # Перезаписывать или добалвять цифру чтобы сделать уникальным
+        "rewrite_trim": False,  # Перезаписывать клип или добавлять "_trim" при обрезке
         "debug": False,
     }
 

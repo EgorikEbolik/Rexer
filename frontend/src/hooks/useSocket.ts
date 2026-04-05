@@ -11,11 +11,13 @@ export type FfmpegProgressType = {
 
 const useSocket = (
     onNewClip: (clip: Clip) => void,
+    onUpdatedClip: (clip: Clip) => void,
     onFfmpegUpdate?: (data: FfmpegProgressType) => void
 ) => {
     const wsRef = React.useRef<WebSocket | null>(null);
     const reconnectTimerRef = React.useRef<number | undefined>(undefined);
     const newClipRef = React.useRef<(clip: Clip) => void>(onNewClip);
+    const updatedClipRef = React.useRef<(clip: Clip) => void>(onUpdatedClip);
     const ffmpegUpdateRef = React.useRef<(data: FfmpegProgressType) => void | undefined>(onFfmpegUpdate);
     const connectRef = React.useRef<() => void>(() => { });
 
@@ -25,6 +27,7 @@ const useSocket = (
         wsRef.current.onmessage = (e: MessageEvent) => {
             const data = JSON.parse(e.data);
             if (data.type === "new_clip") newClipRef.current(data.clip);
+            if (data.type === "updated_clip") updatedClipRef.current(data.clip);
             if (data.type === "ffmpeg_progress") ffmpegUpdateRef.current?.(data);
             if (data.type === "ffmpeg_ready") ffmpegUpdateRef.current?.(data);
             if (data.type === "ffmpeg_error") ffmpegUpdateRef.current?.(data);
@@ -39,6 +42,7 @@ const useSocket = (
 
     React.useLayoutEffect(() => {
         newClipRef.current = onNewClip;
+        updatedClipRef.current = onUpdatedClip;
         ffmpegUpdateRef.current = onFfmpegUpdate;
         connectRef.current = connect;
 

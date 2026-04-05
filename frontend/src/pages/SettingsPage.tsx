@@ -249,18 +249,41 @@ const SettingsPage: React.FC = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <div>
+                        <div className="text-left">
                             <Label>
                                 Перезаписывать файлы с одинаковым именем
                             </Label>
                             <p className="text-xs text-muted-foreground mt-0.5">
                                 Если выключено - к имени добавится порядковый
-                                номер
+                                номер.
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Если включенно - файл перезаписывается
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                (Рекомендуется оставить выключенным)
                             </p>
                         </div>
                         <Switch
                             checked={settings.rewrite_files}
                             onCheckedChange={(v) => update("rewrite_files", v)}
+                        />
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div className="text-left">
+                            <Label>Перезаписывать файлы при обрезке</Label>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Если выключено - создается новый файл вида
+                                "мое-видео_trimed"
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Если включено - исходный файл перезапишется
+                                (откатить изменения не получится!)
+                            </p>
+                        </div>
+                        <Switch
+                            checked={settings.rewrite_trim}
+                            onCheckedChange={(v) => update("rewrite_trim", v)}
                         />
                     </div>
                     <div className="space-y-1.5">

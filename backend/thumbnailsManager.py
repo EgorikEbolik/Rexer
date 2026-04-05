@@ -1,11 +1,10 @@
 import threading
 
-from utils import VIDEO_EXTENSIONS, format_time_millisec
+from utils import VIDEO_EXTENSIONS, create_hash, format_time_millisec
 from paths import get_cache_dir
 from ffmpegManager import get_video_info, run_ffmpeg
 from settings import settings
 
-from hashlib import md5
 from urllib.parse import quote
 from pathlib import Path
 from shutil import rmtree
@@ -13,10 +12,6 @@ import ffmpeg
 from loguru import logger
 
 _ffmpeg_semaphore = threading.Semaphore(3)
-
-
-def create_hash(to_hash) -> str:
-    return md5(str(to_hash).encode()).hexdigest()
 
 
 def get_thumbnail_path(clip_path: Path | str) -> Path:
@@ -81,12 +76,15 @@ def generate_tileset(
 
             tileset_path.parent.mkdir(parents=True, exist_ok=True)
 
-            input_kwargs = {"threads": 0, "hwaccel": "auto", "skip_frame": "nokey"}
+            input_kwargs = {"threads": 0, "hwaccel": "auto"}
+            if duration > 10:
+                input_kwargs["skip_frame"] = "nokey"
 
             ffmpeg_command = (
                 ffmpeg.input(str(clip_path), **input_kwargs)
                 .filter("fps", fps=f"1/{interval_sec}")
                 .filter("scale", tile_item_width, -1)
+                .filter("format", "yuvj420p")
                 .filter("tile", f"{tile_x_count}x{tile_y_count}")
                 .output(str(tileset_path), vframes=1, **{"q:v": quality})
             )

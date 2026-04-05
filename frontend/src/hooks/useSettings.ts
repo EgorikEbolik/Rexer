@@ -17,6 +17,7 @@ export interface Settings {
   hover_playback: boolean;
   tileset_quality: number;
   rewrite_files: boolean,
+  rewrite_trim: boolean,
   debug: boolean,
 }
 

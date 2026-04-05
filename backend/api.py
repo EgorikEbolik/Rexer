@@ -12,7 +12,8 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from fileProcessor import rename_simple
+from clipEditor import trim_video
+from fileProcessor import notify_new_clip, notify_updated_clip, rename_simple
 from thumbnailsManager import (
     delete_video_cache,
     generate_thumbnail,
@@ -134,8 +135,8 @@ def get_clips():
     return clips
 
 
-@app.get("/clips/stream")
-def stream_clip(path: str):
+@app.api_route("/clips/stream", methods=["GET", "HEAD"])
+def stream_clip(path: str, t: float = None):
     file = Path(path)
     if not file.exists():
         return {"error": "Файл не найден"}
@@ -183,6 +184,39 @@ def update_settings(new_settings: dict[str, Any]):
         video_monitor.update_args(folder_to_watch=diff["watch_folder"])
         logger.debug(video_monitor.folder_to_watch)
     return {"ok": True}
+
+
+@app.post("/clips/trim")
+def trim_clip(
+    path: str,
+    start_time: float,
+    end_time: float,
+):
+    new_path = trim_video(path, start_time, end_time)
+    if not new_path:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Не удалось обрезать файл",
+        )
+    threading.Thread(target=generate_thumbnail, args=(new_path,), daemon=True).start()
+    threading.Thread(target=generate_tileset, args=(new_path,), daemon=True).start()
+
+    clip = {
+        "name": new_path.stem,
+        "filename": new_path.name,
+        "path": str(new_path),
+        "size_mb": round(new_path.stat().st_size / (1024 * 1024), 2),
+        "created_at": new_path.stat().st_mtime,
+        "game": (
+            new_path.parent.name if settings.data["sort_mode"] == "game" else None
+        ),
+    }
+
+    if settings.data.get("rewrite_trim") is False:
+        notify_new_clip(clip)
+    else:
+        notify_updated_clip(clip)
+    return clip
 
 
 @app.delete("/clips")

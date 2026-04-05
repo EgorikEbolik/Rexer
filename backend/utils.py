@@ -1,3 +1,4 @@
+from hashlib import md5
 from pathlib import Path
 import winreg
 import sys
@@ -143,3 +144,7 @@ def delete_file(path: Path | str) -> bool:
     except Exception as e:
         logger.exception(f"Неизвестная ошибка при удалении: {e}")
         return False
+
+
+def create_hash(to_hash) -> str:
+    return md5(str(to_hash).encode()).hexdigest()

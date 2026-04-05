@@ -1,3 +1,4 @@
+import type { Clip } from "@/components/videoGrid/videoCard";
 import React from "react";
 import { toast } from "sonner";
 
@@ -38,7 +39,6 @@ const useClipActions = () => {
         try {
             const res = await fetch(`${API}/clips?path=${encodeURIComponent(path)}`, { method: "DELETE" });
             if (!res.ok) throw new Error("При попытке удаления клипа произошла ошибка запроса");
-
             onSuccess?.()
             toast.success("Клип удален")
         } catch (error) {
@@ -48,7 +48,29 @@ const useClipActions = () => {
         }
     }, [])
 
-    return { renameClip, deleteClip }
+    const trimClip = React.useCallback(async (
+        path: string,
+        start_time: number,
+        end_time: number,
+        onSuccess?: (new_clip: Clip) => void,
+        onError?: () => void,
+    ) => {
+        try {
+            const res = await fetch(`${API}/clips/trim?path=${encodeURIComponent(path)}&start_time=${encodeURIComponent(start_time)}&end_time=${encodeURIComponent(end_time)}`, { method: "POST" });
+            if (!res.ok) throw new Error("При попытке обрезки клипа произошла ошибка запроса");
+            const data = await res.json();
+            if (data) {
+                onSuccess?.(data)
+                toast.success("Клип обрезан")
+            }
+        } catch (error) {
+            onError?.();
+            console.error("Ошибка обрезки:", error);
+            toast.error(String(error))
+        }
+    }, [])
+
+    return { renameClip, deleteClip, trimClip }
 }
 
 export default useClipActions;
