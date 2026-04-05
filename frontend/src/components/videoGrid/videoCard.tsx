@@ -41,7 +41,7 @@ const VideoCard: React.FC<{
     const [streamUrl, setStreamUrl] = React.useState<string>(
         `${api}/clips/stream?path=${encodeURIComponent(currentPath)}`,
     );
-    const thumbnailUrl = useThumbnail(api, currentPath);
+    const thumbnailUrl = useThumbnail(api, currentPath, clip._t);
     const [loading, setLoading] = React.useState<boolean>(false);
 
     const videoRef = React.useRef<HTMLVideoElement>(null);

@@ -9,8 +9,8 @@ const thumbnailFetcher = async (url: string) => {
     return url;
 };
 
-export const useThumbnail = (api: string, path: string) => {
-    const url = `${api}/clips/thumbnail?path=${encodeURIComponent(path)}`;
+export const useThumbnail = (api: string, path: string, cacheBuster?: number) => {
+    const url = `${api}/clips/thumbnail?path=${encodeURIComponent(path)}${cacheBuster ? `&t=${cacheBuster}` : ''}`;
 
     const { data } = useSWR(url, thumbnailFetcher, {
         errorRetryInterval: 500,

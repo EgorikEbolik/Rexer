@@ -128,7 +128,7 @@ const PlayerModal: React.FC<{
     );
     const playerRef = useRef<MediaPlayerInstance>(null);
     const [vttUrl, setVttUrl] = useState<string>(
-        `${api}/clips/tileset/vtt?path=${encodeURIComponent(currentPath)}`,
+        `${api}/clips/tileset/vtt?path=${encodeURIComponent(currentPath)}${clip._t ? `&t=${clip._t}` : ""}`,
     );
     const [loading, setLoading] = useState<boolean>(false);
 
@@ -147,12 +147,13 @@ const PlayerModal: React.FC<{
             currentPath,
             newName,
             (newPath) => {
+                const cacheBuster = Date.now();
                 setCurrentPath(newPath);
                 setStreamUrl(
-                    `${api}/clips/stream?path=${encodeURIComponent(newPath)}`,
+                    `${api}/clips/stream?path=${encodeURIComponent(newPath)}&t=${cacheBuster}`,
                 );
                 setVttUrl(
-                    `${api}/clips/tileset/vtt?path=${encodeURIComponent(newPath)}`,
+                    `${api}/clips/tileset/vtt?path=${encodeURIComponent(newPath)}&t=${cacheBuster}`,
                 );
                 onRename(newPath, newName);
             },
@@ -617,12 +618,13 @@ const PlayerModal: React.FC<{
                                             trimValue[0],
                                             trimValue[1],
                                             (newClip) => {
+                                                const cacheBuster = Date.now();
                                                 setStreamUrl(
-                                                    `${api}/clips/stream?path=${encodeURIComponent(newClip.path)}&t=${Date.now()}`,
+                                                    `${api}/clips/stream?path=${encodeURIComponent(newClip.path)}&t=${cacheBuster}`,
                                                 );
                                                 setCurrentPath(newClip.path);
                                                 setVttUrl(
-                                                    `${api}/clips/tileset/vtt?path=${encodeURIComponent(newClip.path)}`,
+                                                    `${api}/clips/tileset/vtt?path=${encodeURIComponent(newClip.path)}&t=${cacheBuster}`,
                                                 );
                                                 setNewName(newClip.name);
                                                 setClipInfo({

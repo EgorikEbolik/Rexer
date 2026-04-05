@@ -140,7 +140,14 @@ def stream_clip(path: str, t: float = None):
     file = Path(path)
     if not file.exists():
         return {"error": "Файл не найден"}
-    return FileResponse(path)
+    return FileResponse(
+        path,
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 
 
 @app.get("/clips/thumbnail")
@@ -153,7 +160,14 @@ def get_thumbnail(path: str):
         return Response(status_code=status.HTTP_202_ACCEPTED)
     if not get_tileset_path(path).exists():
         threading.Thread(target=generate_tileset, args=(path,), daemon=True).start()
-    return FileResponse(str(thumb_path))
+    return FileResponse(
+        str(thumb_path),
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 
 
 @app.get("/clips/tileset")
@@ -161,7 +175,9 @@ def get_tileset(path: str):
     tileset = get_tileset_path(path)
     if not tileset.exists():
         return {"error": "Тайлсет не найден"}
-    return FileResponse(str(tileset))
+    return FileResponse(
+        str(tileset), headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
+    )
 
 
 @app.get("/clips/tileset/vtt")
@@ -169,7 +185,9 @@ def get_tileset_vtt(path: str):
     vtt = get_vtt_path(path)
     if not vtt.exists():
         return {"error": "VTT не найден"}
-    return FileResponse(str(vtt))
+    return FileResponse(
+        str(vtt), headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
+    )
 
 
 @app.post("/settings")
